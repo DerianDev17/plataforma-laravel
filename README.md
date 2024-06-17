@@ -1,62 +1,59 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Plataforma Laravel
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Latest Stable Version](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## About Laravel
+## Descripción
+Plataforma Laravel es un proyecto basado en el framework Laravel, diseñado para proporcionar una base sólida para el desarrollo de aplicaciones web. Este repositorio incluye una estructura de directorios bien organizada y varios componentes esenciales para facilitar el desarrollo.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Características
+- **Autenticación y Autorización**: Configuración básica para gestionar usuarios y roles.
+- **Gestión de Base de Datos**: Migraciones, seeders, y factories para facilitar la creación y administración de la base de datos.
+- **Frontend Integrado**: Uso de TailwindCSS para el diseño y Vue.js para interactividad.
+- **Pruebas Automatizadas**: Conjunto de pruebas unitarias y funcionales utilizando PHPUnit.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requisitos
+- PHP >= 7.4
+- Composer
+- Node.js y npm
+- MySQL
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Instalación
+1. Clona el repositorio:
+    ```bash
+    git clone https://github.com/DerianDev17/plataforma-laravel.git
+    ```
+2. Navega al directorio del proyecto:
+    ```bash
+    cd plataforma-laravel
+    ```
+3. Instala las dependencias de PHP:
+    ```bash
+    composer install
+    ```
+4. Instala las dependencias de JavaScript:
+    ```bash
+    npm install
+    ```
+5. Configura el archivo de entorno:
+    ```bash
+    cp .env.example .env
+    ```
+6. Genera la clave de la aplicación:
+    ```bash
+    php artisan key:generate
+    ```
+7. Configura la base de datos en el archivo `.env` y ejecuta las migraciones:
+    ```bash
+    php artisan migrate --seed
+    ```
+8. Compila los assets:
+    ```bash
+    npm run dev
+    ```
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Uso
+Para iniciar el servidor de desarrollo:
+```bash
+php artisan serve
