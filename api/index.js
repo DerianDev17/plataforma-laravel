@@ -5,8 +5,14 @@ const app = express();
 app.use(
   '/',
   createProxyMiddleware({
-    target: 'http://127.0.0.1:3306', // Laravel server
+    target: 'http://127.0.0.1:8000', // Laravel server
     changeOrigin: true,
+    onProxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('Host', '127.0.0.1:8000');
+    },
+    onError: (err, req, res) => {
+      res.status(500).send('Proxy error: ' + err.message);
+    }
   })
 );
 
