@@ -20,7 +20,9 @@
         "resolve-url-loader": "^3.1.0",
         "sweetalert2": "^10.16.3",
         "tailwindcss": "^1.8.0",
-        "vue-template-compiler": "^2.6.12"
+        "vue-template-compiler": "^2.6.12",
+        "express": "^4.17.1",
+        "http-proxy-middleware": "^1.0.6"
     },
     "dependencies": {}
 }
