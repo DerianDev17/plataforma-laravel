@@ -55,7 +55,7 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
         }
 
         foreach ($to_delete as $td) {
-            $td->forcedelete();
+            $td->delete();
         }
         // dd($to_delete);
     }
@@ -147,6 +147,12 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
     public function crearUsuario($row)
     {
         $paralelo = trim($row[13]);
+
+        $trashed = User::withTrashed()->where('email', trim($row[7]))->first();
+        if ($trashed) {
+            $trashed->forceDelete();
+        }
+
         $user = new User();
         $user->name =                      $row[1];
         $user->last_name =                 $row[2];
@@ -169,12 +175,13 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
         $user->diapago =                   $row[16];
         $user->enviarCorreo =              $row[17];
 
-        $user->email_verified_at =         now();
         $user->remember_token =            Str::random(10);
         $user->student_group_id =          $this->getStudentGroupbyCode($paralelo)->id;
 
         $user->username =                  $this->createUsername($row[1], $row[2]);
-        $user->password =                  Hash::make($user->username);
+        $tempPassword =                    Str::random(12);
+        $user->password =                  Hash::make($tempPassword);
+        $user->must_change_password =      true;
 
         // campos que se pidieron al inicio
         $user->last_name_representante =   '-1';
@@ -184,17 +191,18 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
 
         $this->asignarRol($user->id, 2);
 
-        $this->enviarCorreoUsuario($user);
+        $this->enviarCorreoUsuario($user, $tempPassword);
 
         ++$this->rows;
     }
 
-    public function enviarCorreoUsuario($user)
+    public function enviarCorreoUsuario($user, $tempPassword = null)
     {
         $details = [
             'title' => 'Creación de cuenta Semilla Digital',
             'body' => 'Saludos desde ',
             'user' => $user,
+            'temp_password' => $tempPassword,
         ];
         // dd($f);
         if (filter_var($user->email, FILTER_VALIDATE_EMAIL)) {

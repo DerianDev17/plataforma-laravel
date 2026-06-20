@@ -70,11 +70,11 @@ class AccountsImport implements ToCollection, WithStartRow
             $user->payment_day =               $row[14];
             $user->status =                    true;
             $user->payment_status =            'paid';
-            $user->email_verified_at =         now();
             $user->remember_token =            Str::random(10);
 
             $user->username =                  $this->createUsername($row[1], $row[2]);
-            $user->password =                  Hash::make($user->username);
+            $user->password =                  Hash::make(Str::random(12));
+            $user->must_change_password =      true;
 
             // campos que se pidieron al inicio
             $user->last_name_representante =   '-1';

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Concerns\HasIdentityValidation;
+use App\Concerns\HasPayments;
+use App\Concerns\HasRoles;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -9,12 +12,9 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\Role;
-use App\Utils\ValidarIdentificacion;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\StudentGroup;
 use App\Utils\Horarios;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -24,21 +24,10 @@ class User extends Authenticatable implements MustVerifyEmail
     use Notifiable;
     use TwoFactorAuthenticatable;
     use SoftDeletes;
+    use HasPayments;
+    use HasRoles;
+    use HasIdentityValidation;
 
-    public const PAYMENT_STATUSES = ['paid', 'pending', 'overdue', 'scholarship'];
-    public const LIVE_CLASS_PAYMENT_STATUSES = ['paid', 'pending', 'scholarship'];
-    public const PAYMENT_STATUS_LABELS = [
-        'paid' => 'Pagado',
-        'pending' => 'Pendiente',
-        'overdue' => 'Vencido',
-        'scholarship' => 'Becado',
-    ];
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'name',
         'email',
@@ -68,13 +57,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'telefonoPadre',
         'telefonoMadre',
         'payment_status',
+        'must_change_password',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -82,20 +67,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'two_factor_secret',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array
-     */
     protected $appends = [
         'profile_photo_url',
     ];
@@ -103,233 +78,6 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $with = [
         'roles',
     ];
-
-    protected $cachedAbilities;
-
-
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class)->withTimestamps();
-    }
-
-    public function assignRole($role)
-    {
-        if (is_string($role)) {
-            $role = Role::whereName($role)->firstOrFail();
-        }
-        $this->roles()->sync($role, false);
-        $this->unsetRelation('roles');
-        $this->cachedAbilities = null;
-    }
-
-    public function abilities()
-    {
-        if ($this->cachedAbilities !== null) {
-            return $this->cachedAbilities;
-        }
-
-        $this->loadMissing('roles.abilities');
-
-        $this->cachedAbilities = $this->roles
-            ->pluck('abilities')
-            ->flatten()
-            ->pluck('name')
-            ->unique()
-            ->values();
-
-        return $this->cachedAbilities;
-    }
-
-    // por el momento solo acepta un rol a la vez
-    public function hasRole($role)
-    {
-        if (is_string($role)) {
-            return $this->roles->contains('name', $role);
-        }
-
-        return $this->roles->contains($role);
-    }
-
-    public function getPaymentDeadline()
-    {
-        // -1 si es nulo en la base
-        if (is_null($this->payment_day) || trim($this->payment_day) === '') {
-            return -1;
-        }
-        // aislar solo el numero
-        preg_match_all('!\d+!', $this->payment_day, $matches);
-
-        if (empty($matches[0])) {
-            return -1;
-        }
-
-        return (int) end($matches[0]);
-    }
-
-    public function getExamMonth()
-    {
-        // si no logró actualizar desde el excel, poner el dato de la base
-        if (is_null($this->exam_month)) {
-
-            return trim(strtolower($this->fecha_examen));
-        }
-
-        // convertir minusculas
-        return trim(strtolower($this->exam_month));
-    }
-
-    public function validatePhone($phone_xlx, $phone_db)
-    {
-        $phone_in_excel = false;
-        $phones = explode('-', $phone_xlx);
-        $conceros = function ($phone) {
-            return '0' . $phone;
-        };
-        $transformed_phones = array_map($conceros, $phones);
-
-        $phone_in_excel = in_array($phone_db, $transformed_phones);
-        return $phone_in_excel;
-    }
-
-    // busca un usuario en el excel y retorna un array con los datos
-    public function findUserInExcel($user)
-    {
-        $found_user = [];
-        $students_excel = Excel::toArray(new UsersImport, 'Base_Alumnos.xlsx');
-        foreach ($students_excel[0] as $i => $std_xlx) {
-            if ($std_xlx[7] === $user->email) {
-                $found_user = $std_xlx;
-            };
-        }
-        return $found_user;
-    }
-
-    public function adeuda()
-    {
-        return $this->effective_payment_status === 'overdue';
-    }
-
-    public function canAccessLiveClasses()
-    {
-        return self::paymentStatusAllowsAccess($this->effective_payment_status);
-    }
-
-    public function getPaymentStatusLabelAttribute()
-    {
-        return self::PAYMENT_STATUS_LABELS[$this->effective_payment_status] ?? $this->effective_payment_status;
-    }
-
-    public function getEffectivePaymentStatusAttribute()
-    {
-        if (array_key_exists('payment_status', $this->attributes) && $this->payment_status !== null) {
-            return $this->payment_status;
-        }
-
-        return (int) $this->status === 1 ? 'paid' : 'overdue';
-    }
-
-    public static function paymentStatusOptions()
-    {
-        return self::PAYMENT_STATUS_LABELS;
-    }
-
-    public static function normalizePaymentStatus($value, $default = 'pending')
-    {
-        $value = trim(mb_strtolower((string) $value));
-
-        if ($value === '') {
-            return $default;
-        }
-
-        $map = [
-            '1' => 'paid',
-            'true' => 'paid',
-            'si' => 'paid',
-            'yes' => 'paid',
-            'pagado' => 'paid',
-            'paid' => 'paid',
-            'al dia' => 'paid',
-            'aldia' => 'paid',
-            '0' => 'overdue',
-            'false' => 'overdue',
-            'no' => 'overdue',
-            'vencido' => 'overdue',
-            'bloqueado' => 'overdue',
-            'adeuda' => 'overdue',
-            'debe' => 'overdue',
-            'overdue' => 'overdue',
-            'pendiente' => 'pending',
-            'pending' => 'pending',
-            'becado' => 'scholarship',
-            'beca' => 'scholarship',
-            'scholarship' => 'scholarship',
-        ];
-
-        if (isset($map[$value])) {
-            return $map[$value];
-        }
-
-        return in_array($value, self::PAYMENT_STATUSES, true) ? $value : $default;
-    }
-
-    public static function paymentStatusAllowsAccess($paymentStatus)
-    {
-        return in_array(
-            self::normalizePaymentStatus($paymentStatus, 'overdue'),
-            self::LIVE_CLASS_PAYMENT_STATUSES,
-            true
-        );
-    }
-
-    public function diapago()
-    {
-        if (
-            array_key_exists('diapago', $this->attributes)
-            && !is_null($this->attributes['diapago'])
-            && trim($this->attributes['diapago']) !== ''
-        ) {
-            return (int) $this->attributes['diapago'];
-        }
-
-        return $this->getPaymentDeadline();
-    }
-
-    public function hasCedulaPadre()
-    {
-        $cedulaPadre = $this->attributes['cedulaPadre'] ?? null;
-
-        return isset($cedulaPadre) && trim($cedulaPadre) !== '';
-    }
-
-    public function getPaymentDeadlineExcel()
-    {
-        $user_excel = $this->findUserInExcel($this);
-
-        // si no se encuentra el usuario en el excel retornar -1
-        if (!$user_excel) {
-            return -1;
-        }
-
-        // guardar el dia maximo de pago en una variable
-        $deadline = $user_excel[14];
-
-        // buscar solo el numero en el string que viene del excel
-        preg_match_all('!\d+!', $deadline, $matches);
-
-        return $matches[0][0];
-    }
-
-    public function getStatusExcel()
-    {
-        $user_excel = $this->findUserInExcel($this);
-
-        // si no se encuentra el usuario en el excel retornar -1
-        if (!$user_excel) {
-            return 0;
-        }
-
-        return $user_excel[15];
-    }
 
     public function course_sessions()
     {
@@ -349,12 +97,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function student_group()
     {
         return $this->belongsTo(StudentGroup::class);
-    }
-
-    public function check_cedula_validity()
-    {
-        $ci_validator = new ValidarIdentificacion();
-        return $ci_validator->validarCedula($this->cedula);
     }
 
     public function scopeStudents($query)
@@ -380,11 +122,12 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->loadMissing('student_group');
         $std_grp = $this->student_group;
 
-        if (!$std_grp || !$std_grp->code) {
+        if (! $std_grp || ! $std_grp->code) {
             return [];
         }
 
         $horarios_obj = new Horarios;
+
         return $horarios_obj->get_horario($std_grp->code);
     }
 }

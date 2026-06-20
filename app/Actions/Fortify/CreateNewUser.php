@@ -3,10 +3,12 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Services\ExcelStudentService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -18,10 +20,7 @@ class CreateNewUser implements CreatesNewUsers
         'lastname' =>               'Apellidos',
         'cellphone' =>              'Celular',
         'email' =>                  'Email',
-        // 'fixedphone' =>          '',
         'highschool' =>             'Colegio',
-        // 'especialty' =>          '',
-        // 'paralelo' =>            '',
         'city' =>                   'Ciudad',
         'regimen' =>                'Régimen',
         'fecha_examen' =>           'Fecha de examen',
@@ -32,24 +31,14 @@ class CreateNewUser implements CreatesNewUsers
         'password' =>               'Contraseña',
     ];
 
-    /**
-     * Validate and create a newly registered user.
-     *
-     * @param  array  $input
-     * @return \App\Models\User
-     */
-    public function create(array $input)
+    public function create(array $input): User
     {
-        // dd(Rule::unique('users')->whereNull('deleted_at'));
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'lastname' => ['required', 'string', 'max:255'],
             'cellphone' => ['required', 'string', 'digits:10',  Rule::unique('users')->whereNull('deleted_at')],
             'email' => ['required', 'string', 'email:rfc', 'not_regex:/[\r\n]/', 'max:255', Rule::unique('users')->whereNull('deleted_at')],
-            // 'fixedphone' => ['string', 'max:255'],
             'highschool' => ['required', 'string', 'max:255'],
-            // 'especialty' => ['string', 'max:255'],
-            // 'paralelo' => ['string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
             'regimen' => ['required'],
             'fecha_examen' => ['required'],
@@ -58,23 +47,30 @@ class CreateNewUser implements CreatesNewUsers
             'lastname_representant' => ['required', 'string', 'max:255'],
             'cellphone_representant' => ['required', 'string', 'digits:10'],
             'cedula' => ['required', 'string', 'size:10'],
+            'code' => ['nullable', 'string', 'max:10'],
+            'fixedphone' => ['nullable', 'string', 'max:255'],
+            'especialty' => ['nullable', 'string', 'max:255'],
+            'paralelo' => ['nullable', 'string', 'max:255'],
         ], [], $this->attr_mappings)->validate();
 
-        $trashed_user = \App\Models\User::withTrashed()->where('email', $input['email'])->first();
+        $trashed_user = User::withTrashed()->where('email', $input['email'])->first();
         if ($trashed_user) {
-            $trashed_user->forceDelete();
+            $trashed_user->restore();
+
+            throw ValidationException::withMessages([
+                'email' => 'Este correo ya pertenece a una cuenta desactivada. Contacta al administrador para reactivarla.',
+            ]);
         }
 
-        // dd($input['code'].$input['fixedphone']);
         $createdUser = User::create([
             'name' => $input['name'],
             'last_name' => $input['lastname'],
             'cellphone' => $input['cellphone'],
             'email' => $input['email'],
-            'fixedphone' => $input['code'] . $input['fixedphone'],
+            'fixedphone' => ($input['code'] ?? '') . ($input['fixedphone'] ?? ''),
             'highschool' => $input['highschool'],
-            'especialty' => $input['especialty'],
-            'paralelo' => $input['paralelo'],
+            'especialty' => $input['especialty'] ?? '',
+            'paralelo' => $input['paralelo'] ?? '',
             'city' => $input['city'],
             'name_representante' => $input['name_representant'],
             'last_name_representante' => $input['lastname_representant'],
@@ -83,31 +79,21 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
             'regimen' => $input['regimen'],
             'fecha_examen' => $input['fecha_examen'],
-            // campo duplicado, TODO eliminar
             'exam_month' => $input['fecha_examen'],
             'cedula' => $input['cedula'],
-
         ]);
-        //si el usario esta en el excel actualizar campo estatus
-        
-        $excel_user = $createdUser->findUserInExcel($createdUser);
+
+        $excel_user = (new ExcelStudentService)->findUserInExcel($createdUser);
 
         if ($excel_user) {
-            $createdUser->status = true;
             $createdUser->exam_month = $createdUser->fecha_examen = $excel_user[13] ?? '-1';
-        } else {
-            $createdUser->status = true;
-            // $createdUser->exam_month = $createdUser->fecha_examen = '-1';
         }
 
-        // dd($createdUser);
         $createdUser->save();
 
-        // por defecto los usuarios se crean con rol de estudiante
         DB::table('role_user')->insert([
             'user_id' => $createdUser->id,
             'role_id' => 2,
-
         ]);
 
         return $createdUser;

@@ -41,6 +41,24 @@ Plataforma educativa construida sobre Laravel, disenada para la gestion academic
 - MySQL 8.0
 - (Opcional) Docker + Docker Compose para entorno Sail
 
+## Arquitectura del modelo User
+
+La logica del modelo `User` esta distribuida en traits por responsabilidad:
+
+| Trait/Servicio | Ubicacion | Responsabilidad |
+|---|---|---|
+| `HasRoles` | `app/Concerns/HasRoles.php` | Relacion con roles, `hasRole()`, `abilities()`, `assignRole()` |
+| `HasPayments` | `app/Concerns/HasPayments.php` | Constantes de pago, `adeuda()`, `canAccessLiveClasses()`, `diapago()`, normalizacion |
+| `HasIdentityValidation` | `app/Concerns/HasIdentityValidation.php` | Validacion de cedula, `getExamMonth()`, `hasCedulaPadre()` |
+| `ExcelStudentService` | `app/Services/ExcelStudentService.php` | Busqueda de usuarios en Excel (`findUserInExcel`) |
+| `User` (modelo) | `app/Models/User.php` | Relaciones ORM, scopes, `horario()`, configuracion del modelo |
+
+### Metodos eliminados (dead code)
+
+- `findUserInExcel()` — movido a `ExcelStudentService`; ademas tenia un bug: `new UsersImport` se resolvia como `App\Models\UsersImport` en vez de `App\Imports\UsersImport`
+- `getPaymentDeadlineExcel()`, `getStatusExcel()` — nunca llamados
+- `validatePhone()` — nunca llamado
+
 ## Instalacion
 
 1. Clona el repositorio:

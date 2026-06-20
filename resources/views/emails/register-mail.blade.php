@@ -15,17 +15,18 @@
 
     <p>Reciba un cordial saludo de parte del equipo de Semilla Digital.</p>
     <p>
-        Le informamos que se le ha generado un nombre de usuario y una contrase&ntilde;a para que pueda acceder
+        Le informamos que se le ha generado un nombre de usuario y una contraseña temporal para que pueda acceder
         a la p&aacute;gina web. Deber&aacute; acceder con los siguientes datos:
     </p>
 
     <p>
         <strong>Nombre de usuario:</strong> {{ $details['user']->username }} <br>
-        <strong>Contrase&ntilde;a:</strong> {{ $details['user']->username }} <br>
+        <strong>Contrase&ntilde;a temporal:</strong> {{ $details['temp_password'] ?? '' }} <br>
     </p>
 
     <p>
-        Le solicitamos que al momento de ingresar cambie su contrase&ntilde;a a una m&aacute;s segura. Este cambio lo puede hacer
+        <strong>Importante:</strong> por seguridad, el sistema le solicitar&aacute; cambiar esta
+        contraseña temporal antes de continuar. Este cambio lo puede hacer
         desde la secci&oacute;n del perfil de usuario.
     </p>
 
