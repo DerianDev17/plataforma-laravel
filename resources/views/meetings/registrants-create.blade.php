@@ -1,4 +1,4 @@
-<x-landing.layout>
+<x-app-layout>
     <div class="container">
         <div class="row">
             <form action="{{ route('post.register_participants') }}" method="POST">
@@ -15,4 +15,4 @@
             </form>
         </div>
     </div>
-</x-landing-layout>
+</x-app-layout>

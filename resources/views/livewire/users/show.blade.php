@@ -76,11 +76,17 @@
                 <a href="{{ route('user.show', $u['id']) }}" class="text-black-600 visited:text-black-600">Ver</a>
                 <a href="{{ route('profile.show') }}" class="text-indigo-600 hover:text-indigo-900">Editar</a>
                 @if ($u['status']===0)
-
-                <a href="{{ route('dashboard-active', $u['id'])}}" class="text-green-600 visited:text-green-600">Activar</a>
+                <form class="inline" method="POST" action="{{ route('dashboard-active', $u['id']) }}">
+                  @csrf
+                  @method('PATCH')
+                  <button type="submit" class="text-green-600 visited:text-green-600">Activar</button>
+                </form>
                 @else
-
-                <a href="{{ route('dashboard-block', $u['id'])}}" class="text-blue-600 visited:text-purple-600">Desactivar</a>
+                <form class="inline" method="POST" action="{{ route('dashboard-block', $u['id']) }}">
+                  @csrf
+                  @method('PATCH')
+                  <button type="submit" class="text-blue-600 visited:text-purple-600">Desactivar</button>
+                </form>
                 @endif
 
               </td>

@@ -99,10 +99,6 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
         // dd($estudiantes->slice(0,2));
         foreach ($estudiantes as $row) {
             $student_model = $this->existeUsuarioBase($row, $keyed_db_stud);
-            // el estudiante existe en el excel, tiene status=0, pero no existe en el sistema
-            if ($row[15] == 0 && !$student_model) {
-                continue;
-            }
             if ($student_model) {
                 $this->actualizarUserData($row, $student_model);
                 continue;
@@ -117,7 +113,7 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
 
         // $user = User::students()->where('email', $row[7])->first();
 
-        $user->status = $row[15];
+        $user->status = true;
         $user->exam_month = $row[13];
         $user->diapago = $row[16];
         $user->enviarCorreo = $row[17];
@@ -159,7 +155,7 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
         $user->fecha_examen =              $row[13];
         $user->exam_month =                $row[13]; // necesario
         $user->payment_day =               $row[14];
-        $user->status =                    $row[15];
+        $user->status =                    true;
         $user->diapago =                   $row[16];
         $user->enviarCorreo =              $row[17];
 
@@ -186,7 +182,7 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
     public function enviarCorreoUsuario($user)
     {
         $details = [
-            'title' => 'Creación de cuenta Eus3',
+            'title' => 'Creación de cuenta Semilla Digital',
             'body' => 'Saludos desde ',
             'user' => $user,
         ];

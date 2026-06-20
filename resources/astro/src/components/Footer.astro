@@ -1,0 +1,23 @@
+---
+const social = [
+  { label: 'Facebook', href: 'https://www.facebook.com/104550457674505?referrer=whatsapp' },
+  { label: 'Instagram', href: 'https://instagram.com/semilladigital_ec' },
+  { label: 'WhatsApp', href: 'https://wa.me/593963277997' },
+];
+---
+
+<footer class="border-t border-zinc-200 bg-zinc-950 text-white">
+  <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+    <div class="flex items-center gap-3">
+      <img class="h-12 w-auto" src="/storage/img/eus-logo.png" alt="Semilla Digital" loading="lazy" />
+      <p class="text-sm font-semibold text-zinc-300">Semilla Digital</p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      {social.map((item) => (
+        <a class="rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold text-zinc-200 transition hover:border-orange-500 hover:text-orange-300" href={item.href} target="_blank" rel="noreferrer">
+          {item.label}
+        </a>
+      ))}
+    </div>
+  </div>
+</footer>

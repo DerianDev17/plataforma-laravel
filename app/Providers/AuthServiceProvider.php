@@ -28,19 +28,20 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         Gate::define('invitar-estudiantes', function (User $user) {
-            $user = User::find($user->id);
-            if (!$user->hasRole('superadmin')) {
-                return false;
+            return $user->hasRole('superadmin');
+        });
+
+        Gate::define('read_course_programs', function (User $user) {
+            return $user->hasRole('superadmin')
+                || $user->abilities()->contains('read_course_programs')
+                || $user->abilities()->contains('crud_course_programs');
+        });
+
+        Gate::after(function ($user, $ability) {
+            if ($user->hasRole('superadmin')) {
+                return true;
             }
-            return true;
-        });
-
-        Gate::after(function ($user, $ability) {
-            return $user->hasRole('superadmin') ? true : null;
-        });
-
-        Gate::after(function ($user, $ability) {
-            return $user->abilities()->contains($ability);
+            return $user->abilities()->contains($ability) ? true : null;
         });
     }
 }

@@ -6,7 +6,7 @@
         <p class="text-sm italic">
             <span class="text-red-500">Atención</span>
             Le solicitamos de la manera más encarecida, actualice sus datos llenando el siguiente formulario. Estamos trabajando
-            para poder brindarle un mejor servicio. Gracias. EUS3
+            para poder brindarle un mejor servicio. Gracias. Semilla Digital
         </p>
         <form>
             <div class="grid grid-cols-1 gap-6 mt-4 sm:grid-cols-2">

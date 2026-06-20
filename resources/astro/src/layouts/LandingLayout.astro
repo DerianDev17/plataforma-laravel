@@ -1,0 +1,22 @@
+---
+import '../styles/global.css';
+
+const {
+  title = 'Semilla Digital',
+  description = 'Preparacion preuniversitaria en Quito con clases presenciales y online.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="icon" type="image/png" href="/storage/img/eus-logo.png" />
+  </head>
+  <body class="landing-shell">
+    <slot />
+  </body>
+</html>

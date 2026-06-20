@@ -1,4 +1,4 @@
-<x-landing.layout>
+<x-app-layout>
     <div class="container">
         <div class="row">
             <form action="/users-roles" method="POST">
@@ -23,4 +23,4 @@
             </form>
         </div>
     </div>
-    </x-landing-layout>
+    </x-app-layout>

@@ -3,133 +3,210 @@
 namespace App\Http\Livewire\StudentAttendances;
 
 use App\Exports\AsistenciasExport;
+use App\Http\Livewire\Concerns\AuthorizesLivewireActions;
 use App\Models\Attendance;
-use Livewire\Component;
-
-use Livewire\WithPagination;
+use App\Models\CourseSession;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
-
-use function Psy\debug;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Show extends Component
 {
     use WithPagination;
+    use AuthorizesLivewireActions;
 
-    public $course_session_id;
-    public $user_id;
-    public $attendance_id;
-    public $user;
-    public $isOpen = 0;
-    public $searchTerm;
+    public $search = '';
+    public $date = '';
+    public $sessionFilter = '';
+    public $studentFilter = '';
+    public $formUserId = '';
+    public $formCourseSessionId = '';
 
-    protected $listeners = [
-        // 'studentSelected' => 'setIdStudent',
-        // 'sessionSelected' => 'setIdSession',
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'date' => ['except' => ''],
+        'sessionFilter' => ['except' => ''],
+        'studentFilter' => ['except' => ''],
     ];
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDate(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSessionFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStudentFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function render()
     {
-        $searchTerm = '%' . $this->searchTerm . '%';
+        $this->authorizeAbility('edit_users');
+
+        $attendancesQuery = Attendance::query()
+            ->with(['user.student_group', 'courseSession.student_group'])
+            ->when(trim($this->search) !== '', function ($query): void {
+                $term = '%' . trim($this->search) . '%';
+
+                $query->where(function ($query) use ($term): void {
+                    $query->whereHas('user', function ($userQuery) use ($term): void {
+                        $userQuery->where('name', 'like', $term)
+                            ->orWhere('last_name', 'like', $term)
+                            ->orWhere('username', 'like', $term)
+                            ->orWhere('email', 'like', $term);
+                    })->orWhereHas('courseSession', function ($sessionQuery) use ($term): void {
+                        $sessionQuery->where('subject', 'like', $term);
+                    });
+                });
+            })
+            ->when($this->date, function ($query): void {
+                $query->whereHas('courseSession', function ($sessionQuery): void {
+                    $sessionQuery->whereDate('date', $this->date);
+                });
+            })
+            ->when($this->sessionFilter, function ($query): void {
+                $query->where('course_session_id', $this->sessionFilter);
+            })
+            ->when($this->studentFilter, function ($query): void {
+                $query->where('user_id', $this->studentFilter);
+            })
+            ->latest();
 
         return view('livewire.student-attendances.show', [
-            'attendances' => Attendance::orderBy('id', 'asc')->where('id', 'like', $searchTerm)->paginate(20)
+            'attendances' => $attendancesQuery->paginate(15),
+            'students' => $this->studentsForSelect(),
+            'sessions' => $this->sessionsForSelect(),
+            'stats' => $this->attendanceStats(),
         ]);
     }
 
-    public function create()
+    public function store(): void
     {
-        $this->resetInputFields();
-        $this->openModal();
-    }
-
-    public function openModal()
-    {
-        $this->isOpen = true;
-        $this->resetErrorBag();
-        $this->resetValidation();
-        $this->emit('modalOpened');
-    }
-
-    public function closeModal()
-    {
-        $this->isOpen = false;
-    }
-
-    private function resetInputFields()
-    {
-        $this->course_session_id = '';
-        $this->user_id = '';
-        $this->attendance_id = '';
-    }
-
-    function checkCompositeUnique($user_id, $course_session_id)
-    {
-        return Attendance::where('user_id', $user_id)
-            ->where('course_session_id', $course_session_id)
-            ->first();
-    }
-
-    public function store()
-    {
-        $user_id = $this->user_id;
-        $course_session_id = $this->course_session_id;
+        $this->authorizeAbility('edit_users');
 
         $this->validate([
-            // 'modulo' => 'required|unique:attendances,modulo,' . $this->attendance_id,
-            'course_session_id' => [
-                'required',
-                function ($attribute, $value, $fail) use ($user_id, $course_session_id) {
-                    // dd(!!$this->checkCompositeUnique($user_id, $course_session_id));
-                    if (!!$this->checkCompositeUnique($user_id, $course_session_id)) {
-                        $fail('El usuario ya registra una asistencia para esa clase.');
-                    };
-                }
-            ],
-            'user_id' => 'required',
+            'formUserId' => 'required|integer|exists:users,id',
+            'formCourseSessionId' => 'required|integer|exists:course_sessions,id',
+        ], [], [
+            'formUserId' => 'estudiante',
+            'formCourseSessionId' => 'clase',
         ]);
 
-        // dd($this->user_id, $this->course_session_id);
-        $data = array(
-            'course_session_id' => $this->course_session_id,
-            'user_id' => $this->user_id,
-        );
+        $exists = Attendance::where('user_id', $this->formUserId)
+            ->where('course_session_id', $this->formCourseSessionId)
+            ->exists();
 
-        $attendance = Attendance::updateOrCreate(['id' => $this->attendance_id], $data);
-        session()->flash('message', $this->attendance_id ? 'Asistencia actualizado correctamente.' : 'Asistencia creado correctamente.');
+        if ($exists) {
+            $this->addError('formCourseSessionId', 'Este estudiante ya tiene asistencia registrada para esa clase.');
+            return;
+        }
 
-        $this->closeModal();
-        $this->resetInputFields();
+        Attendance::create([
+            'user_id' => $this->formUserId,
+            'course_session_id' => $this->formCourseSessionId,
+        ]);
+
+        $this->clearAttendanceStatsCache();
+
+        $this->reset(['formUserId', 'formCourseSessionId']);
+        session()->flash('message', 'Asistencia registrada correctamente.');
     }
 
-    public function edit($id)
+    public function delete(int $attendanceId): void
     {
-        $attendance = Attendance::findOrFail($id);
-        $this->attendance_id = $id;
-        $this->course_session_id = $attendance->course_session_id;
-        $this->user_id = $attendance->user_id;
+        $this->authorizeAbility('edit_users');
 
-        $this->openModal();
+        Attendance::findOrFail($attendanceId)->delete();
+        $this->clearAttendanceStatsCache();
+        session()->flash('message', 'Asistencia eliminada correctamente.');
     }
 
-    public function delete($id)
+    public function resetFilters(): void
     {
-        $this->attendance_id = $id;
-        Attendance::find($id)->delete();
-        session()->flash('message', 'Enlace eliminado correctamente.');
+        $this->reset(['search', 'date', 'sessionFilter', 'studentFilter']);
+        $this->resetPage();
     }
 
     public function downloadAttendances()
     {
-        $current = Carbon::now()->format('YmdHs');
+        $this->authorizeAbility('edit_users');
 
-        return Excel::download(new AsistenciasExport, 'asistencias' . $current . '.xlsx');
+        $current = Carbon::now()->format('YmdHis');
+
+        return Excel::download(new AsistenciasExport, 'asistencias-' . $current . '.xlsx');
     }
-    // public function setIdStudent($id_student){
-    //     $this->user_id = $id_student;
-    // }
 
-    // public function setSessionStudent($course_session_id){
-    //     $this->course_session_id = $course_session_id;
-    // }
+    private function studentsForSelect()
+    {
+        $students = User::students()
+            ->with('student_group')
+            ->orderBy('name')
+            ->orderBy('last_name')
+            ->limit(250)
+            ->get();
+
+        if ($this->formUserId && ! $students->contains('id', (int) $this->formUserId)) {
+            $selectedStudent = User::with('student_group')->find($this->formUserId);
+
+            if ($selectedStudent) {
+                $students->push($selectedStudent);
+            }
+        }
+
+        return $students;
+    }
+
+    private function sessionsForSelect()
+    {
+        $sessions = CourseSession::with('student_group')
+            ->orderByDesc('date')
+            ->orderByDesc('time')
+            ->limit(250)
+            ->get();
+
+        if ($this->formCourseSessionId && ! $sessions->contains('id', (int) $this->formCourseSessionId)) {
+            $selectedSession = CourseSession::with('student_group')->find($this->formCourseSessionId);
+
+            if ($selectedSession) {
+                $sessions->push($selectedSession);
+            }
+        }
+
+        return $sessions;
+    }
+
+    private function attendanceStats(): array
+    {
+        return Cache::remember($this->attendanceStatsCacheKey(), now()->addMinutes(5), function (): array {
+            return [
+                'total' => Attendance::count(),
+                'today' => Attendance::whereDate('created_at', Carbon::today())->count(),
+                'students' => Attendance::distinct('user_id')->count('user_id'),
+                'sessions' => Attendance::distinct('course_session_id')->count('course_session_id'),
+            ];
+        });
+    }
+
+    private function attendanceStatsCacheKey(): string
+    {
+        return 'attendance.admin.stats.' . Carbon::today()->toDateString();
+    }
+
+    private function clearAttendanceStatsCache(): void
+    {
+        Cache::forget($this->attendanceStatsCacheKey());
+    }
 }

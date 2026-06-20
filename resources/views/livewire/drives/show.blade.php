@@ -5,16 +5,7 @@
 </x-slot>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    @if (session()->has('message'))
-    <div id="alert" class="text-white px-6 py-4 border-0 rounded relative mb-4 bg-green-500">
-        <span class="inline-block align-middle mr-8">
-            {{ session('message') }}
-        </span>
-        <button class="absolute bg-transparent text-2xl font-semibold leading-none right-0 top-0 mt-4 mr-6 outline-none focus:outline-none" onclick="document.getElementById('alert').remove();">
-            <span>×</span>
-        </button>
-    </div>
-    @endif
+    <x-ui.alert />
 
     <button wire:click="create()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10">Crear nuevo enlace</button>
     <x-jet-input type="text" placeholder="Buscar" wire:model="searchTerm" />
@@ -70,6 +61,10 @@
             </table>
             {{ $drives->links('components.ui.pagination',['is_livewire' => true]) }}
         </div>
+    </div>
+    @else
+    <div class="py-10 text-center text-gray-500">
+        <p class="text-lg">No hay enlaces registrados.</p>
     </div>
     @endif
 
@@ -145,8 +140,7 @@
 @endpush
 
 @push('javascripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function() {
 

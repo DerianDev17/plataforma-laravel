@@ -1,59 +1,77 @@
 <x-guest-layout>
-    <x-jet-authentication-card>
-        <x-slot name="logo">
-            <x-jet-authentication-card-logo />
-        </x-slot>
+    <x-auth.shell>
+        <div class="auth-card" role="main" aria-label="Inicio de sesion">
+            <x-auth.visual />
 
-        <x-jet-validation-errors class="mb-4" />
+            <section class="auth-panel" aria-label="Formulario de inicio de sesion">
+                <div class="auth-panel-card">
+                    <x-auth.panel-header
+                        eyebrow="Bienvenido"
+                        title="Iniciar sesion"
+                        copy="Usa las credenciales entregadas por el equipo acad&eacute;mico."
+                        mobile-logo
+                    />
 
-        @if (session('status'))
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ session('status') }}
-        </div>
-        @endif
+                    <x-jet-validation-errors class="auth-alert-gap eus-alert eus-alert-danger" role="alert" />
 
-        @if (false)
-        <form method="POST" action="{{ route('logged_in') }}">
-            @endif
-
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
-
-                <div>
-                    <x-jet-label for="username" value="{{ __('Nombre de Usuario') }}" />
-                    <x-jet-input id="username" class="block mt-1 w-full" type="text" name="username" :value="old('username')" required autofocus />
-                </div>
-
-                <div class="mt-4">
-                    <x-jet-label for="password" value="{{ __('Contraseña') }}" />
-                    <x-jet-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
-                </div>
-
-                <div class="block mt-4">
-                    <label for="remember_me" class="flex items-center">
-                        <input id="remember_me" type="checkbox" class="form-checkbox" name="remember">
-                        <span class="ml-2 text-sm text-gray-600">{{ __('Recordarme') }}</span>
-                    </label>
-                </div>
-
-                
-                <div class="flex items-center justify-between mt-4">
-                <div>
-                <p >
-                </p>
-                </div>
-                <div>
-                    @if (Route::has('password.request'))
-                    <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('password.request') }}">
-                        {{ __('¿Olvidaste tu contraseña?') }}
-                    </a>
+                    @if (session('status'))
+                        <div class="auth-alert-gap eus-alert eus-alert-success" role="status">
+                            {{ session('status') }}
+                        </div>
                     @endif
 
-                    <x-jet-button class="ml-4">
-                        {{ __('INGRESAR') }}
-                    </x-jet-button>
+                    <form method="POST" action="{{ route('login') }}" class="auth-login-form" novalidate aria-describedby="login-help">
+                        @csrf
+
+                        <div>
+                            <label for="username" class="eus-label">Nombre de usuario</label>
+                            <input
+                                id="username"
+                                class="eus-input"
+                                type="text"
+                                name="username"
+                                value="{{ old('username') }}"
+                                required
+                                autofocus
+                                autocomplete="username"
+                                aria-required="true"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="password" class="eus-label">Contrase&ntilde;a</label>
+                            <input
+                                id="password"
+                                class="eus-input"
+                                type="password"
+                                name="password"
+                                required
+                                autocomplete="current-password"
+                                aria-required="true"
+                            >
+                            @if (Route::has('password.request'))
+                                <a class="auth-forgot-link" href="{{ route('password.request') }}">
+                                    &iquest;Olvidaste tu contrase&ntilde;a?
+                                </a>
+                            @endif
+                        </div>
+
+                        <label for="remember_me" class="eus-checkbox">
+                            <input id="remember_me" type="checkbox" name="remember">
+                            <span>Recordarme</span>
+                        </label>
+
+                        <button type="submit" class="eus-btn eus-btn-primary eus-btn-lg eus-btn-full">
+                            Ingresar
+                        </button>
+                    </form>
+
+                    <p id="login-help" class="auth-help">
+                        Si tienes inconvenientes para ingresar, escribe a
+                        <a class="auth-help-link" href="mailto:soporte@semilladigital.com">soporte@semilladigital.com</a>.
+                    </p>
                 </div>
-                </div>
-            </form>
-    </x-jet-authentication-card>
+            </section>
+        </div>
+    </x-auth.shell>
 </x-guest-layout>

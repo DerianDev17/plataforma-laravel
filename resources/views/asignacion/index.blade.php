@@ -1,4 +1,4 @@
-<x-landing.layout>
+<x-app-layout>
     <a href="roles/create" class="btn btn-success">Crear Nuevo Rol</a>
     <div class="row">
         <div class="col-sm-6">
@@ -23,4 +23,4 @@
         </div>
     </div>
     <a href="users-roles/create" class="btn btn-success">Asignar nuevo rol</a>
-    </x-landing-layout>
+    </x-app-layout>

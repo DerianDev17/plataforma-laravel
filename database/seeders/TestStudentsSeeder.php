@@ -43,6 +43,7 @@ class TestStudentsSeeder extends Seeder
         $user2 = new User;
         $user2->name =                      'Mary';
         $user2->email =                     'desadeve@gmail.com';
+        $user2->username =                  'mary_test';
         $user2->email_verified_at =         now();
         $user2->password =                  Hash::make('Maria123');
         $user2->remember_token =            Str::random(10);
@@ -65,6 +66,7 @@ class TestStudentsSeeder extends Seeder
         $user3 = new User;
         $user3->name =                      'David';
         $user3->email =                     'david36mtl@hotmail.com';
+        $user3->username =                  'david_test';
         $user3->email_verified_at =         now();
         $user3->password =                  Hash::make('Maria123');
         $user3->remember_token =            Str::random(10);

@@ -42,27 +42,13 @@ class JetstreamServiceProvider extends ServiceProvider
         );
 
         Fortify::authenticateUsing(function (Request $request) {
-            // obtener el usuario desde la bdd por el email.
             $user = User::where('username', $request->username)->first();
 
-            // si no se encontro el usuario o si la contraseña incorrecta no retornar nada
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return;
             }
-            
-            $logged_user = DB::table('sessions')->where('user_id', $user->id)->delete();
 
-            // if ($logged_user) {
-            //     abort(403, 'Operación deshabilitada.');
-            //     return;
-            // }
-
-            if (Hash::check($request->password, $user->password)) {
-                DB::table('sessions')->where('user_id', $user->id)->delete();
-                $res = Auth::logoutOtherDevices($request->password);
-                // dd($res);
-                return $user;
-            }
+            return $user;
         });
     }
 

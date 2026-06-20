@@ -26,7 +26,7 @@ class RegistrationMail extends Mailable
      */
     public function build()
     {
-        return $this->subject('Creación de cuenta Eus3')
+        return $this->subject('Creación de cuenta Semilla Digital')
 
         ->view('emails.register-mail');
         // return $this->view('view.name');

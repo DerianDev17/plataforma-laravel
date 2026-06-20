@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
         DB::table('users')->insert([
             'name' => 'Maria',
             'email' => 'maria@mail.com',
+            'username' => 'maria',
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),
@@ -44,6 +45,7 @@ class UserSeeder extends Seeder
         DB::table('users')->insert([
             'name' => 'Rodrigo',
             'email' => 'rodrigo@mail.com',
+            'username' => 'rodrigo',
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),
@@ -66,6 +68,7 @@ class UserSeeder extends Seeder
         DB::table('users')->insert([
             'name' => 'Mike',
             'email' => 'mike@mail.com',
+            'username' => 'mike',
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),
@@ -88,6 +91,7 @@ class UserSeeder extends Seeder
         DB::table('users')->insert([
             'name' => 'Paul',
             'email' => 'paul@mail.com',
+            'username' => 'paul',
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),
@@ -112,6 +116,7 @@ class UserSeeder extends Seeder
         DB::table('users')->insert([
             'name' => 'Michelle',
             'email' => 'michelle@mail.com',
+            'username' => 'michelle',
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),

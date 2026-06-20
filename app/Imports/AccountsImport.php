@@ -21,12 +21,8 @@ class AccountsImport implements ToCollection, WithStartRow
         set_time_limit(0);
         foreach ($rows as $row) {
 
-            if ($row[15] !== 1) {
-                continue;
-            }
-
             if (
-                $row[7] == 'eus3pre@gmail.com' 
+                $row[7] == 'semilladigital@gmail.com' 
                 || $row[7] == 'paucarevelyn222@gmail.com' 
                 || $row[7] == 'admin@mail.com'
                 || $row[7] == 'admin@mail.com'
@@ -72,7 +68,7 @@ class AccountsImport implements ToCollection, WithStartRow
             $user->fecha_examen =              $row[13];
             $user->exam_month =                $row[13]; // necesario
             $user->payment_day =               $row[14];
-            $user->status =                    $row[15];
+            $user->status =                    true;
             $user->email_verified_at =         now();
             $user->remember_token =            Str::random(10);
 

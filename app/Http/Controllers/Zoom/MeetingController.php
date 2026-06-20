@@ -9,9 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Traits\ZoomJWT;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use PhpParser\Node\Stmt\TryCatch;
 use Illuminate\Support\Facades\Gate;
 
 
@@ -145,7 +143,7 @@ class MeetingController extends Controller
     public function add_registrant(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|string',
+            'email' => 'required|email:rfc|not_regex:/[\r\n]/',
             'name' => 'required|string',
             'meeting_id' => 'required|string',
         ]);
@@ -158,22 +156,17 @@ class MeetingController extends Controller
         }
 
         $data = $validator->validated();
+
         try {
-            //code...
-            // $path = 'meetings/' . $data['meeting_id'] . '/registrants';
             $path = 'webinars/' . $data['meeting_id'] . '/registrants';
-            // dd($path);
-            $response = $this->zoomPost($path, [
+            $this->zoomPost($path, [
                 'email' => $data['email'],
                 'first_name' => $data['name'],
                 'last_name' => $data['name'],
             ]);
-            // dd($response);
-            // dd($response->body());
 
             return view('meetings.registrants-create');
         } catch (\Throwable $th) {
-            //throw $th;
             return [
                 'failed' => 'Usuario no encontrado',
             ];
@@ -183,23 +176,14 @@ class MeetingController extends Controller
     public function change_approval_type($type, $meeting_id)
     {
         try {
-            //code...
             $path = 'webinars/' . $meeting_id;
-
             $response = $this->zoomPatch($path, [
-                'settings' => ["approval_type" => $type,],
+                'settings' => ['approval_type' => $type],
             ]);
-            // dd($response->body());
 
-            return [
-                'status' => 'ok',
-                'response' => $response
-            ];
+            return ['status' => 'ok', 'response' => $response];
         } catch (\Throwable $th) {
-            //throw $th;
-            return [
-                'failed' => 'Usuario no encontrado',
-            ];
+            return ['failed' => 'Usuario no encontrado'];
         }
     }
 
@@ -215,54 +199,32 @@ class MeetingController extends Controller
 
     public function deny_all_registrants()
     {
-        $id_febrero = '93481791337';
-        $id_junio = '93946442405';
-        $id_julio = '95599131511';
+        $ids = ['93481791337', '93946442405', '95599131511'];
 
-        $registrants_febrero = $this->getWebinarRegistrants($id_febrero, 'pending');
-        $registrants_febrero = $this->formatRegistrants($registrants_febrero);
-        $this->deny_registrants($id_febrero, $registrants_febrero);
-
-        $registrants_junio = $this->getWebinarRegistrants($id_junio, 'pending');
-        $registrants_junio = $this->formatRegistrants($registrants_junio);
-        $this->deny_registrants($id_junio, $registrants_junio);
-
-        $registrants_julio = $this->getWebinarRegistrants($id_julio, 'pending');
-        $registrants_julio = $this->formatRegistrants($registrants_julio);
-        $this->deny_registrants($id_julio, $registrants_julio);
-
-        // dd($registrants_febrero, $registrants_junio, $registrants_julio);
+        foreach ($ids as $id) {
+            $registrants = $this->getWebinarRegistrants($id, 'pending');
+            $this->deny_registrants($id, $this->formatRegistrants($registrants));
+        }
     }
 
     public function deny_registrants($meeting_number, $registrants)
     {
         try {
-            // $path2 = 'webinars/' . $meeting_number;
-            // $response2 = $this->zoomGet($path2);
-            // dd($response2->json());
             $path = 'webinars/' . $meeting_number . '/registrants/status';
-            $response = $this->zoomPut($path, [
+            return $this->zoomPut($path, [
                 'action' => 'deny',
                 'registrants' => $registrants,
                 'occurrence_id' => '1623441600000',
             ]);
-            // dd(($response->body()));
-            return $response;
         } catch (\Throwable $th) {
-            //throw $th;
-            dd($th);
-            return [
-                'failed' => 'Usuario no encontrado',
-            ];
+            report($th);
+            return ['failed' => 'Usuario no encontrado'];
         }
     }
 
     public function format_response_error_for_print($json_error)
     {
-        $msg = $json_error['code'] . '|' . $json_error['message'] . '|';
-        foreach ($json_error['errors'] as $error) {
-        }
-        return;
+        return $json_error['code'] . '|' . $json_error['message'];
     }
 
     public function registrar_estudiantes_zoom(Request $request)
@@ -271,66 +233,20 @@ class MeetingController extends Controller
         if (!Gate::allows('invitar-estudiantes')) {
             abort(403);
         }
-        $std_febrero = $this->getStudentsbyMonth('Febrero');
-        $std_junio = $this->getStudentsbyMonth('Junio');
-        $std_julio = $this->getStudentsbyMonth('Julio');
-
-        //Datos de prueba
-        // $array1 = [
-        //     User::find(1),
-        //     User::find(4993),
-        //     User::find(4994),
-        //     // User::find(4995),
-        //     // User::find(4996),
-        //     // User::find(4997),
-        //     // User::find(4998),
-        // ];
-
         $responses = [];
 
-        // foreach ($array1 as $student) {
-        //     $resp = $this->registerToWebinarZoom($student);
-        //     if ($resp->failed()) {
-        //         // dd($resp->body());
-        //         if (isset($student->email))
-        //             $responses[$student->email] = $resp;
-        //         // array_push($responses, $elem);
-        //     }
-        // }
-        // dd($student);
-
-        foreach ($std_febrero as $student) {
+        foreach ($this->getStudentsbyMonth('Febrero') as $student) {
             $resp = $this->registerToWebinarZoom($student);
-            if ($resp->failed()) {
-                if (isset($student->email))
-                    $responses[$student->email] = $resp;
+            if ($resp->failed() && isset($student->email)) {
+                $responses[$student->email] = $resp;
             }
         }
 
-        // foreach ($std_junio as $student) {
-        //     $resp = $this->registerToWebinarZoom($student);
-        //     if ($resp->failed()) {
-        //         if (isset($student->email))
-        //             $responses[$student->email] = $resp;
-        //     }
-        // }
-
-        // foreach ($std_julio as $student) {
-        //     $resp = $this->registerToWebinarZoom($student);
-        //     if ($resp->failed()) {
-        //         if (isset($student->email))
-        //             $responses[$student->email] = $resp;
-        //     }
-        // }
-
         $messages = '';
-        // dd($responses);
         foreach ($responses as $email => $resp) {
-            // dd($email, $resp->body());
-            $messages .= $email . ': ';
-            $messages .= $resp->body();
-            $messages .= "<br>";
+            $messages .= $email . ': ' . $resp->body() . '<br>';
         }
+
         return $messages;
     }
 
@@ -346,12 +262,10 @@ class MeetingController extends Controller
 
     public function add_participantes(Request $request)
     {
-
         $students = $this->getStudentsbyGroupId($request->group_id);
-
         $webinar_id = StudentGroup::find($request->group_id)->webinar_id;
-        // dd($students->slice(0, 40), $webinar_id);
         $this->register_students_webinar($students, $webinar_id);
+
         return back();
     }
 
@@ -371,51 +285,24 @@ class MeetingController extends Controller
 
     function getStudentsbyMonth($mes)
     {
-        $students = User::join('role_user', 'users.id', '=', 'role_user.user_id')
-            ->where('role_id', '=', 2)
+        return User::whereHas('roles', function ($q) {
+                $q->where('role_id', 2);
+            })
+            ->with('student_group')
             ->where('status', '=', 1)
-            //->where('id_zoom', '=', null)
-            // ->select('*')
-            // ->select('users.email', 'users.name', 'users.last_name')
+            ->where('exam_month', $mes)
             ->get();
-
-        //dd($students);
-        return $students;
     }
 
     function getStudentsbyGroupId($student_group_id)
     {
-        $students = User::join('role_user', 'users.id', '=', 'role_user.user_id')
-            ->where('role_id', '=', 2)
+        return User::whereHas('roles', function ($q) {
+                $q->where('role_id', 2);
+            })
+            ->with('student_group')
             ->where('status', '=', 1)
-            //->where('enviarCorreo', '=', 'si')
-            //->where('id_zoom', '=', null)
             ->where('student_group_id', '=', $student_group_id)
             ->get();
-        //dd('total ' . $students);
-        var_dump(count($students));
-        return $students;
-    }
-
-    function registerStudentZoom($student)
-    {
-        $webinar_id = $student->student_group->webinar_id;
-        try {
-            $path = 'meetings/' . $webinar_id . '/registrants';
-
-            $response = $this->zoomPost($path, [
-                'email' => $student->email,
-                'first_name' => $student->name,
-            ]);
-            // dd(($response->body()));
-            return $response;
-        } catch (\Throwable $th) {
-            //throw $th;
-            // dd($th);
-            return [
-                'failed' => 'Usuario no encontrado',
-            ];
-        }
     }
 
     function registerToWebinarZoom($student)
@@ -425,20 +312,14 @@ class MeetingController extends Controller
         try {
             $path = 'webinars/' . $webinar_id . '/registrants';
 
-            $response = $this->zoomPost($path, [
+            return $this->zoomPost($path, [
                 'email' => $student->email,
                 'first_name' => $student->name,
                 'last_name' => $student->last_name,
             ]);
-            //echo (' -> ' . $student->email);
-            //dd(($response->body()));
-            return $response;
         } catch (\Throwable $th) {
-            //throw $th;
-            dd($th);
-            return [
-                'failed' => 'Usuario no encontrado',
-            ];
+            report($th);
+            return ['failed' => 'Usuario no encontrado'];
         }
     }
 
@@ -453,11 +334,11 @@ class MeetingController extends Controller
         ];
         try {
             $response = $this->zoomGet($path, $params);
-            // dd(($response->json()))
-            if (isset($response->json()['next_page_token'])) {
 
+            if (isset($response->json()['next_page_token'])) {
                 $next_page_token = $response->json()['next_page_token'];
                 $registrants = array_merge($registrants, $response->json()['registrants']);
+
                 while ($next_page_token) {
                     $response = $this->zoomGet($path, [
                         'page_size' => 300,
@@ -468,14 +349,9 @@ class MeetingController extends Controller
                     $registrants = array_merge($registrants, $response->json()['registrants']);
                 }
             }
-            // return $response;
         } catch (\Throwable $th) {
-            //throw $th;
-            dd($th);
-            return [
-                // 'failed' => 'General error.',
-                'message' => $th,
-            ];
+            report($th);
+            return ['message' => $th];
         }
 
         return $registrants;
@@ -496,14 +372,18 @@ class MeetingController extends Controller
     public function set_zoom_fields($meetin_id)
     {
         $registrants = $this->getWebinarRegistrants($meetin_id);
-        // dd($registrants);    
+        $emails = array_column($registrants, 'email');
+        $emails = array_filter($emails);
+
+        if (empty($emails)) return;
+
+        $users = User::whereIn('email', $emails)->get()->keyBy('email');
+
         foreach ($registrants as $r) {
-            if (!isset($r['email'])) {
-                dd($r);
-            }
-            $found_user = User::where('email', $r['email'])->first();
-            //dd('probando: ' . $found_user);
-            if ($found_user != null) {
+            if (!isset($r['email'])) continue;
+
+            $found_user = $users->get($r['email']);
+            if ($found_user) {
                 $found_user->id_zoom = $r['id'];
                 $found_user->join_url = $r['join_url'];
                 $found_user->save();
@@ -517,18 +397,13 @@ class MeetingController extends Controller
             $occurrence_id = $this->getCurrentOccurrenceId($meeting_number);
             $path = 'webinars/' . $meeting_number . '/registrants/status?occurrence_id=' . $occurrence_id;
 
-            $response = $this->zoomPut($path, [
+            return $this->zoomPut($path, [
                 'action' => 'approve',
                 'registrants' => $registrants,
             ]);
-            //dd(($response->body()));
-            return $response;
         } catch (\Throwable $th) {
-            //throw $th;
-            dd('error: ' . $th);
-            return [
-                'failed' => 'Usuario no encontrado',
-            ];
+            report($th);
+            return ['failed' => 'Usuario no encontrado'];
         }
     }
 
@@ -536,20 +411,16 @@ class MeetingController extends Controller
     {
         try {
             $path = 'webinars/' . $meeting_number;
-            $response = $this->zoomGet($path, [
-                'show_previous_occurrences' => false,
-            ]);
-            // dd($response->json());
+            $response = $this->zoomGet($path, ['show_previous_occurrences' => false]);
+
             if ($response->json()['occurrences']) {
                 return $response->json()['occurrences'][0]['occurrence_id'];
             }
+
             return [];
         } catch (\Throwable $th) {
-            //throw $th;
-            dd($th);
-            return [
-                'failed' => 'Usuario no encontrado',
-            ];
+            report($th);
+            return ['failed' => 'Usuario no encontrado'];
         }
     }
 }

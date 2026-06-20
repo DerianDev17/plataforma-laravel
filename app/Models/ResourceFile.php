@@ -11,6 +11,6 @@ class ResourceFile extends Model
 
     public function resource()
     {
-        return $this->belongsTo(TopicResource::class);
+        return $this->belongsTo(TopicResource::class, 'topic_resource_id');
     }
 }

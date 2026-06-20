@@ -44,8 +44,8 @@ class SendCredentials extends Notification
         $user_name = $this->user->username;
         // dd($this->user->username);
         return (new MailMessage)
-            ->line('¡Hola! Bienvenido/a a EUS3 Preuniversitario.')
-            ->line('Gracias por registrarte en la plataforma virtual de EUS3 Preuniversitario, desde ahora podrás vivir la mejor experiencia en educación virtual. ')
+            ->line('¡Hola! Bienvenido/a a Semilla Digital.')
+            ->line('Gracias por registrarte en la plataforma virtual de Semilla Digital, desde ahora podrás vivir la mejor experiencia en educación virtual. ')
             ->line('Debe acceder con los siguientes datos:')
             ->line('Nombre de usuario:'.' '.$user_name)
             ->line('Contraseña:'.' '.$user_name)

@@ -15,17 +15,17 @@ class CourseSeeder extends Seeder
     public function run()
     {
         DB::table('courses')->insert([
-            'name' => 'Preuniversitario Región Costa',
+            'name' => 'Semilla Digital Región Costa',
             'code' => 'pre_febrero',
         ]);
 
         DB::table('courses')->insert([
-            'name' => 'Preuniversitario Región Sierra 1',
+            'name' => 'Semilla Digital Región Sierra 1',
             'code' => 'pre_junio',
         ]);
 
         DB::table('courses')->insert([
-            'name' => 'Preuniversitario Región Sierra 2',
+            'name' => 'Semilla Digital Región Sierra 2',
             'code' => 'pre_julio',
         ]);
     }

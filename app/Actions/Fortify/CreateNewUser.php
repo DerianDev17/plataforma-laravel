@@ -45,7 +45,7 @@ class CreateNewUser implements CreatesNewUsers
             'name' => ['required', 'string', 'max:255'],
             'lastname' => ['required', 'string', 'max:255'],
             'cellphone' => ['required', 'string', 'digits:10',  Rule::unique('users')->whereNull('deleted_at')],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->whereNull('deleted_at')],
+            'email' => ['required', 'string', 'email:rfc', 'not_regex:/[\r\n]/', 'max:255', Rule::unique('users')->whereNull('deleted_at')],
             // 'fixedphone' => ['string', 'max:255'],
             'highschool' => ['required', 'string', 'max:255'],
             // 'especialty' => ['string', 'max:255'],
@@ -79,7 +79,7 @@ class CreateNewUser implements CreatesNewUsers
             'name_representante' => $input['name_representant'],
             'last_name_representante' => $input['lastname_representant'],
             'cellphone_representante' => $input['cellphone_representant'],
-            'status' => false,
+            'status' => true,
             'password' => Hash::make($input['password']),
             'regimen' => $input['regimen'],
             'fecha_examen' => $input['fecha_examen'],
@@ -93,10 +93,10 @@ class CreateNewUser implements CreatesNewUsers
         $excel_user = $createdUser->findUserInExcel($createdUser);
 
         if ($excel_user) {
-            $createdUser->status = $excel_user[15] ?? false;
+            $createdUser->status = true;
             $createdUser->exam_month = $createdUser->fecha_examen = $excel_user[13] ?? '-1';
         } else {
-            $createdUser->status = false;
+            $createdUser->status = true;
             // $createdUser->exam_month = $createdUser->fecha_examen = '-1';
         }
 

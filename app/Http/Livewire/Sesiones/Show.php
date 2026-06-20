@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Sesiones;
 
+use App\Http\Livewire\Concerns\AuthorizesLivewireActions;
 use App\Models\CourseSession;
 use App\Models\StudentGroup;
 use App\Models\Subject;
@@ -13,6 +14,7 @@ use Livewire\WithPagination;
 class Show extends Component
 {
     use WithPagination;
+    use AuthorizesLivewireActions;
 
     public $course_id;
     public $student_groups_id;
@@ -33,6 +35,8 @@ class Show extends Component
 
     public function render()
     {
+        $this->authorizeAbility('edit_users');
+
         $searchTerm = '%' . $this->searchTerm . '%';
         return view('livewire.sesiones.show', [
             'sesiones' => CourseSession::orderBy('date', 'asc')
@@ -43,12 +47,16 @@ class Show extends Component
 
     public function mount()
     {
+        $this->authorizeAbility('edit_users');
+
         $this->subjects = Subject::all();
         $this->student_groups = StudentGroup::all();
     }
 
     public function create()
     {
+        $this->authorizeAbility('edit_users');
+
         $this->resetInputFields();
         $this->openModal();
     }
@@ -80,6 +88,8 @@ class Show extends Component
 
     public function store()
     {
+        $this->authorizeAbility('edit_users');
+
         $this->date = explode(' ', $this->datetime)[0];
         $this->time = explode(' ', $this->datetime)[1];
 
@@ -109,6 +119,8 @@ class Show extends Component
 
     public function edit($id)
     {
+        $this->authorizeAbility('edit_users');
+
         $session = CourseSession::findOrFail($id);
         $this->session_id = $id;
 
@@ -125,8 +137,10 @@ class Show extends Component
 
     public function delete($id)
     {
+        $this->authorizeAbility('edit_users');
+
         $this->session_id = $id;
-        CourseSession::find($id)->delete();
+        CourseSession::findOrFail($id)->delete();
         session()->flash('message', 'Sesión eliminada correctamente.');
     }
 }

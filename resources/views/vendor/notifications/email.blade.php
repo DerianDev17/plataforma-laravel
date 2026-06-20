@@ -6,7 +6,7 @@
 @if ($level === 'error')
 # @lang('Whoops!')
 @else
-<img src="https://eus3pre.com/storage/img/header_mail.jpeg" class="header-mail" alt="Laravel Logo"><br>
+<img src="https://semilladigital.com/brand/semilla-logo-horizontal.svg" class="header-mail" alt="Semilla Digital"><br>
 @endif
 @endif
 

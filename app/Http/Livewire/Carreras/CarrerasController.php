@@ -2,18 +2,12 @@
 
 namespace App\Http\Livewire\Carreras;
 
-use App\Exports\StudentsExport;
 use App\Models\Career;
 use Livewire\Component;
-use App\Models\User;
-use App\Models\Role;
-use Carbon\Carbon;
 use Livewire\WithPagination;
-use Maatwebsite\Excel\Facades\Excel;
 
 class CarrerasController extends Component
 {
-
     use WithPagination;
 
     public
@@ -36,9 +30,7 @@ class CarrerasController extends Component
         $provincia_campus_2;
 
     public $isOpen = 0;
-    public $roles = [];
-    public $from_create = null;
-
+    public $career_id;
     public $searchTerm;
     public $searchedGrade;
 
@@ -51,29 +43,23 @@ class CarrerasController extends Component
     {
         $searchTerm = '%' . $this->searchTerm . '%';
 
-        $data = null;
-        if ($this->searchTerm == null && $this->searchedGrade == null) {
-            $data = [
-                'carrersForTable' => Career::orderBy('id', 'desc')
-                    ->paginate(50)
-            ];
-        } else {
-            $data = [
-                'carrersForTable' => Career::orderBy('id', 'desc')
-                    ->where('car_nombre_carrera', 'like', $searchTerm)
-                    ->where('puntaje_referencial', 'like', '%'.$this->searchedGrade.'%')
-                    // ->where('puntaje_referencial', '<', $this->searchedGrade + 50)
-                    ->paginate(50)
-            ];
+        $query = Career::orderBy('id', 'desc');
+
+        if ($this->searchTerm) {
+            $query->where('car_nombre_carrera', 'like', $searchTerm);
         }
 
-        return view('livewire.carreras.carrera', $data);
+        if ($this->searchedGrade) {
+            $query->where('puntaje_referencial', 'like', '%' . $this->searchedGrade . '%');
+        }
+
+        return view('livewire.carreras.carrera', [
+            'carrersForTable' => $query->paginate(50)
+        ]);
     }
 
     public function create()
     {
-        $this->from_create = true;
-
         $this->resetInputFields();
         $this->openModal();
     }
@@ -90,33 +76,47 @@ class CarrerasController extends Component
 
     public function edit($id)
     {
-        $student = User::findOrFail($id);
-        $this->student_id = $id;
-        $this->name = $student->name;
-        $this->last_name = $student->last_name;
-        $this->password = $student->password;
-        $this->cedula = $student->cedula;
-        $this->cellphone = $student->cellphone;
-        $this->email = $student->email;
-        $this->fixedphone = $student->fixedphone;
-        $this->highschool = $student->highschool;
-        $this->especialty = $student->especialty;
-        $this->paralelo = $student->paralelo;
-        $this->city = $student->city;
-        $this->status = $student->status;
-        $this->name_representante = $student->name_representante;
-        $this->last_name_representante = $student->last_name_representante;
-        $this->cellphone_representante = $student->cellphone_representante;
-        $this->regimen = $student->regimen;
-        // $this->fecha_examen = $student->fecha_examen;
-        $this->exam_month = $student->exam_month;
+        $career = Career::findOrFail($id);
+        $this->career_id = $id;
+        $this->ies_nombre_institut = $career->ies_nombre_institut;
+        $this->ies_tipo_ies = $career->ies_tipo_ies;
+        $this->ies_tipo_financiamiento = $career->ies_tipo_financiamiento;
+        $this->cam_direccion = $career->cam_direccion;
+        $this->provincia_campus = $career->provincia_campus;
+        $this->canton_campus = $career->canton_campus;
+        $this->car_nombre_carrera = $career->car_nombre_carrera;
+        $this->ofa_titulo = $career->ofa_titulo;
+        $this->modalidad = $career->modalidad;
+        $this->jornada = $career->jornada;
+        $this->apc_descripcion_carrera = $career->apc_descripcion_carrera;
+        $this->cmc_duracion_carrera = $career->cmc_duracion_carrera;
+        $this->ofa_id = $career->ofa_id;
+        $this->puntaje_referencial = $career->puntaje_referencial;
+        $this->apc_perfil_ocupacional = $career->apc_perfil_ocupacional;
+        $this->porcentaje_beca = $career->porcentaje_beca;
+        $this->provincia_campus_2 = $career->provincia_campus_2;
         $this->openModal();
     }
 
-    public function downloadStudents()
+    private function resetInputFields()
     {
-        $current = Carbon::now()->format('YmdHs');
-
-        return Excel::download(new StudentsExport, 'estudiantes' . $current . '.xlsx');
+        $this->ies_nombre_institut = '';
+        $this->ies_tipo_ies = '';
+        $this->ies_tipo_financiamiento = '';
+        $this->cam_direccion = '';
+        $this->provincia_campus = '';
+        $this->canton_campus = '';
+        $this->car_nombre_carrera = '';
+        $this->ofa_titulo = '';
+        $this->modalidad = '';
+        $this->jornada = '';
+        $this->apc_descripcion_carrera = '';
+        $this->cmc_duracion_carrera = '';
+        $this->ofa_id = '';
+        $this->puntaje_referencial = '';
+        $this->apc_perfil_ocupacional = '';
+        $this->porcentaje_beca = '';
+        $this->provincia_campus_2 = '';
+        $this->career_id = '';
     }
 }

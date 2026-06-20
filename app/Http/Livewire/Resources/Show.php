@@ -5,7 +5,6 @@ namespace App\Http\Livewire\Resources;
 use App\Models\Course;
 use App\Models\Drive;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Show extends Component
@@ -106,18 +105,33 @@ class Show extends Component
     public function render()
     {
         $user = auth()->user();
-        $drives = DB::table('drives')
-            ->select(DB::raw('modulo, materia, course_id, JSON_ARRAYAGG(link) AS links'))
-            ->where('course_id', $user->student_group->id ?? null)
-            // ->where('course_id', $this->getCourseid($user))
-            ->groupBy('materia', 'modulo')
+        $student_group_id = $user->student_group->id ?? null;
+
+        if (!$student_group_id) {
+            $this->drives = $this->construirArrayDrives(collect());
+            $this->n_modules = 0;
+
+            return view('livewire.resources.show');
+        }
+
+        $drives = Drive::where('course_id', $student_group_id)
             ->orderBy('modulo')
-            ->get();
+            ->get()
+            ->groupBy('materia')
+            ->map(function ($group, $materia) {
+                return [
+                    'modulo' => $group->first()->modulo,
+                    'materia' => $materia,
+                    'course_id' => $group->first()->course_id,
+                    'links' => $group->pluck('link')->toJson(),
+                ];
+            })
+            ->values();
         // dd($drives);
         $this->drives = $this->construirArrayDrives($drives);
 
         
-        if ($user->student_group->id == 4)
+        if ($student_group_id == 4)
         {
             $this->n_modules = 2;
         }

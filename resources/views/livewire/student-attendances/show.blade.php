@@ -1,240 +1,226 @@
-<x-slot name="header">
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        Asistencias
-    </h2>
-</x-slot>
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+@php
+    use Carbon\Carbon;
 
-    @if (session()->has('message'))
-    <div id="alert" class="text-white px-6 py-4 border-0 rounded relative mb-4 bg-green-500">
-        <span class="inline-block align-middle mr-8">
-            {{ session('message') }}
-        </span>
-        <button class="absolute bg-transparent text-2xl font-semibold leading-none right-0 top-0 mt-4 mr-6 outline-none focus:outline-none" onclick="document.getElementById('alert').remove();">
-            <span>×</span>
-        </button>
-    </div>
-    @endif
-    <div class="grid grid-cols-2">
-        <div>
-            <!-- <button wire:click="create()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ">Registrar Asistencia</button>
-            <x-jet-input type="text" placeholder="Buscar" wire:model="searchTerm" /> -->
+    $statCards = [
+        ['variant' => 'info', 'icon' => 'check', 'value' => number_format($stats['total']), 'label' => 'Registros totales'],
+        ['variant' => 'success', 'icon' => 'calendar', 'value' => number_format($stats['today']), 'label' => 'Registradas hoy'],
+        ['variant' => 'purple', 'icon' => 'users', 'value' => number_format($stats['students']), 'label' => 'Estudiantes con asistencia'],
+        ['variant' => 'orange', 'icon' => 'book', 'value' => number_format($stats['sessions']), 'label' => 'Clases con registro'],
+    ];
+@endphp
+
+<div class="dashboard-stack">
+    <x-ui.alert />
+
+    <section class="dashboard-hero attendance-hero" aria-label="Resumen administrativo de asistencias">
+        <div class="dashboard-hero-body">
+            <div>
+                <p class="dashboard-eyebrow">Administracion academica</p>
+                <h2 class="dashboard-title">Control de asistencias</h2>
+                <p class="dashboard-copy">
+                    Registra asistencias manuales, revisa el historial y filtra por estudiante, clase o fecha.
+                </p>
+            </div>
+            <div class="dashboard-mark" aria-hidden="true">
+                <x-ui.icon name="check" :size="38" />
+            </div>
         </div>
-        <div>
-            <button wire:click="downloadAttendances()" class="bg-grey-light hover:bg-grey text-grey-darkest font-bold py-2 px-4 rounded inline-flex items-center">
-                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
-                </svg>
-                <span>Descargar</span>
-            </button>
-        </div>
-    </div>
+    </section>
 
-    @if (count($attendances) > 0)
-    <div class="py-10">
-        <div class="inline-block min-w-full shadow rounded-lg overflow-hidden">
-            <table class="min-w-full leading-normal">
-                <thead>
-                    <tr>
-                        <th class="px-5 py-3 border-b-2 border-black bg-black text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Usuario
-                        </th>
-                        <th class="px-5 py-3 border-b-2 border-black bg-black text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Clase
-                        </th>
-                        <th class="px-5 py-3 border-b-2 border-black bg-black text-left text-xs font-semibold text-white uppercase tracking-wider">
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($attendances as $attendance)
-                    <tr>
-                        <td class="px-5 py-5 bg-white text-sm @if (!$loop->last) border-gray-200 border-b @endif">
-                            {{App\Models\User::find($attendance->user_id)->email}}
-                        </td>
-                        <td class="px-5 py-5 bg-white text-sm @if (!$loop->last) border-gray-200 border-b @endif">
-                            {{App\Models\CourseSession::find($attendance->course_session_id)->subject}}
-                            {{App\Models\CourseSession::find($attendance->course_session_id)->date}}
-                            {{App\Models\CourseSession::find($attendance->course_session_id)->time}}
-                        </td>
-                        <td class="px-5 py-5 bg-white text-sm @if (!$loop->last) border-gray-200 border-b @endif text-right">
-                            <div class="inline-block whitespace-no-wrap">
-                                <button wire:click="edit({{ $attendance->id }})" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Editar</button>
-                                <button wire:click="$emit('triggerDelete',{{ $attendance->id }})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Borrar</button>
-                            </div>
-                        </td>
+    <section class="dashboard-grid" aria-label="Indicadores de asistencia">
+        @foreach($statCards as $stat)
+            <x-dashboard.stat-card
+                :variant="$stat['variant']"
+                :icon="$stat['icon']"
+                :value="$stat['value']"
+                :label="$stat['label']"
+            />
+        @endforeach
+    </section>
 
-                    </tr>
-
-                    @endforeach
-                </tbody>
-            </table>
-            {{ $attendances->links('components.ui.pagination',['is_livewire' => true]) }}
-        </div>
-    </div>
-    @endif
-
-    @if($isOpen)
-    <x-ui.customised-modal>
-        <x-slot name="content">
-            <form>
-                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="flex flex-wrap -mx-3 mb-6">
-                        <div class="w-full md:w-2/2 px-3 mb-6 md:mb-0">
-                            <label for="titleInput" class="block text-gray-700 text-sm font-bold mb-2">Usuarios:</label>
-                            <div wire:ignore>
-                                <select class="select2-usuarios mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="user_id_input" placeholder="Módulo">
-                                </select>
-                            </div>
-                            @error('user_id') <span class="text-red-500">{{ $message }}</span>@enderror
-                        </div>
+    <section class="attendance-admin-grid" aria-label="Registro y filtros">
+        <article class="eus-card">
+            <div class="eus-card-header">
+                <h3 class="eus-card-title">Registrar asistencia</h3>
+            </div>
+            <div class="eus-card-body">
+                <form wire:submit.prevent="store" class="attendance-form" novalidate>
+                    <div>
+                        <label for="attendance-user" class="eus-label eus-label-required">Estudiante</label>
+                        <select
+                            id="attendance-user"
+                            class="eus-input"
+                            wire:model.defer="formUserId"
+                            required
+                            aria-required="true"
+                            @error('formUserId') aria-invalid="true" aria-describedby="attendance-user-error" @enderror
+                        >
+                            <option value="">Seleccionar estudiante</option>
+                            @foreach($students as $student)
+                                <option value="{{ $student->id }}">
+                                    {{ $student->name }} {{ $student->last_name }} - {{ $student->email }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('formUserId')
+                            <p id="attendance-user-error" class="eus-error" role="alert">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    <div class="flex flex-wrap -mx-3 mb-6">
-                        <div class="w-full md:w-2/2 px-3 mb-6 md:mb-0">
-                            <label for="titleInput" class="block text-gray-700 text-sm font-bold mb-2">Clase:</label>
-                            <div wire:ignore>
-                                <select class="select2-clases mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="clase_id_input" placeholder="Grupo">
-                                </select>
-                            </div>
-                            @error('course_session_id') <span class="text-red-500">{{ $message }}</span>@enderror
-                        </div>
+                    <div>
+                        <label for="attendance-session" class="eus-label eus-label-required">Clase</label>
+                        <select
+                            id="attendance-session"
+                            class="eus-input"
+                            wire:model.defer="formCourseSessionId"
+                            required
+                            aria-required="true"
+                            @error('formCourseSessionId') aria-invalid="true" aria-describedby="attendance-session-error" @enderror
+                        >
+                            <option value="">Seleccionar clase</option>
+                            @foreach($sessions as $session)
+                                <option value="{{ $session->id }}">
+                                    {{ Carbon::parse($session->date)->format('d/m/Y') }} {{ substr($session->time, 0, 5) }} - {{ $session->subject }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('formCourseSessionId')
+                            <p id="attendance-session-error" class="eus-error" role="alert">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="submit" class="eus-btn eus-btn-primary">
+                        Guardar asistencia
+                    </button>
+                </form>
+            </div>
+        </article>
+
+        <article class="eus-card">
+            <div class="eus-card-header">
+                <h3 class="eus-card-title">Filtros</h3>
+                <button type="button" class="eus-btn eus-btn-sm eus-btn-ghost" wire:click="resetFilters">
+                    Limpiar
+                </button>
+            </div>
+            <div class="eus-card-body">
+                <div class="attendance-filter-grid">
+                    <div>
+                        <label for="attendance-search" class="eus-label">Buscar</label>
+                        <input
+                            id="attendance-search"
+                            type="search"
+                            class="eus-input"
+                            wire:model.debounce.400ms="search"
+                            placeholder="Nombre, email o clase"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="attendance-date" class="eus-label">Fecha</label>
+                        <input id="attendance-date" type="date" class="eus-input" wire:model="date">
+                    </div>
+
+                    <div>
+                        <label for="attendance-session-filter" class="eus-label">Clase</label>
+                        <select id="attendance-session-filter" class="eus-input" wire:model="sessionFilter">
+                            <option value="">Todas</option>
+                            @foreach($sessions as $session)
+                                <option value="{{ $session->id }}">
+                                    {{ Carbon::parse($session->date)->format('d/m/Y') }} - {{ $session->subject }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="attendance-student-filter" class="eus-label">Estudiante</label>
+                        <select id="attendance-student-filter" class="eus-input" wire:model="studentFilter">
+                            <option value="">Todos</option>
+                            @foreach($students as $student)
+                                <option value="{{ $student->id }}">
+                                    {{ $student->name }} {{ $student->last_name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
-                <div class="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <span class="flex w-full sm:ml-3 sm:w-auto">
-                        <button wire:click.prevent="store()" type="button" class="inline-flex bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Guardar</button>
-                    </span>
-                    <span class="mt-3 flex w-full sm:mt-0 sm:w-auto">
-                        <button wire:click="closeModal()" type="button" class="inline-flex bg-white hover:bg-gray-200 border border-gray-300 text-gray-500 font-bold py-2 px-4 rounded">Cancelar</button>
-                    </span>
-                </div>
-            </form>
-        </x-slot>
-        </x-customised-modal>
+            </div>
+            <div class="eus-card-footer attendance-actions-row">
+                <button type="button" wire:click="downloadAttendances" class="eus-btn eus-btn-secondary">
+                    Descargar Excel
+                </button>
+            </div>
+        </article>
+    </section>
+
+    <section class="eus-card" aria-label="Historial administrativo de asistencias">
+        <div class="eus-card-header">
+            <h3 class="eus-card-title">Historial de asistencias</h3>
+            <span class="eus-badge eus-badge-gray">{{ $attendances->total() }} registros</span>
+        </div>
+
+        @if($attendances->count())
+            <div class="eus-table-wrapper">
+                <table class="eus-table">
+                    <thead>
+                        <tr>
+                            <th>Estudiante</th>
+                            <th>Clase</th>
+                            <th>Fecha</th>
+                            <th>Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($attendances as $attendance)
+                            <tr>
+                                <td>
+                                    <div class="student-cell">
+                                        <div class="avatar-token" aria-hidden="true">
+                                            {{ strtoupper(substr($attendance->user->name ?? 'E', 0, 2)) }}
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-strong text-truncate">
+                                                {{ $attendance->user->name }} {{ $attendance->user->last_name }}
+                                            </div>
+                                            <div class="muted-small text-truncate">{{ $attendance->user->email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="font-strong">{{ $attendance->courseSession->subject ?? 'Clase no disponible' }}</div>
+                                    <div class="muted-small">
+                                        {{ optional(optional($attendance->courseSession)->student_group)->name ?? 'Sin paralelo' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    @if($attendance->courseSession)
+                                        {{ Carbon::parse($attendance->courseSession->date)->format('d/m/Y') }}
+                                        <span class="muted-small">{{ substr($attendance->courseSession->time, 0, 5) }}</span>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="muted-small">
+                                    {{ $attendance->created_at->format('d/m/Y H:i') }}
+                                </td>
+                                <td>
+                                    <button type="button" wire:click="delete({{ $attendance->id }})" class="eus-btn eus-btn-sm eus-btn-danger">
+                                        Borrar
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            {{ $attendances->links('components.ui.pagination', ['is_livewire' => true]) }}
+        @else
+            <div class="eus-empty empty-compact">
+                <div class="eus-empty-title">Sin asistencias</div>
+                <div class="eus-empty-text">No hay registros que coincidan con los filtros aplicados.</div>
+            </div>
         @endif
+    </section>
 </div>
-@push('estilos')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
-@endpush
-
-@push('javascripts')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.js"></script>
-<script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-
-
-        @this.on('triggerDelete', companyId => {
-            Swal.fire({
-                title: 'Confirmar acción',
-                text: '¡La asistencia será eliminada!',
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Eliminar'
-            }).then((result) => {
-                if (result.value) {
-                    @this.call('delete', companyId)
-                } else {
-                    console.log("Canceled");
-                }
-            });
-        });
-    })
-
-    Livewire.on('modalOpened', () => {
-        // select2
-        // $('.select2-usuarios').on('select2:select', (e) => {
-        //     var data = e.params.data;
-        //     Livewire.emit('studentSelected', data.id);
-        //     console.log(data);
-        // });
-
-        jQuery('.select2-usuarios').on('change', function(e) {
-            var data = $('.select2-usuarios').select2('val');
-            console.log('data1 :>> ', data);
-            @this.set('user_id', data);
-        });
-
-        jQuery('.select2-clases').on('change', function(e) {
-            var data = $('.select2-clases').select2('val');
-            console.log('data2 :>> ', data);
-            @this.set('course_session_id', data);
-        });
-
-        jQuery('.select2-usuarios').select2({
-
-            ajax: {
-                url: "{{route('ajax.students')}}",
-                datatype: "json",
-                delay: 250,
-                data: function(params) {
-                    var query = {
-                        search: params.term,
-                        page: params.page,
-                    }
-                    return query;
-                },
-                processResults: function(data, params) {
-                    params.page = params.page || 1;
-                    let parsedData = JSON.parse(data);
-                    // console.log('data :>> ', parsedData);
-                    let dataselect = parsedData.data.map((student) => {
-                        return {
-                            text: student.name + ' ' + student.last_name + ' | ' + student.email,
-                            id: student.id
-                        }
-                    })
-                    return {
-                        results: dataselect,
-                        pagination: {
-                            more: (params.page * 30) < data.total_count
-                        }
-                    };
-                },
-                cache: true,
-            }
-        });
-
-        jQuery('.select2-clases').select2({
-
-            ajax: {
-                url: "{{route('ajax.clases')}}",
-                datatype: "json",
-                delay: 250,
-                data: function(params) {
-                    var query = {
-                        search: params.term,
-                        page: params.page,
-                    };
-                    return query;
-                },
-                processResults: function(data, params) {
-                    params.page = params.page || 1;
-                    let parsedData = JSON.parse(data);
-                    let dataselect = parsedData.data.map((clase) => {
-                        return {
-                            text: clase.subject + ' | ' + clase.date + ' | ' + clase.time,
-                            id: clase.id
-                        }
-                    })
-                    return {
-                        results: dataselect,
-                        pagination: {
-                            more: (params.page * 30) < data.total_count
-                        }
-                    };
-                },
-                cache: true,
-            }
-
-        });
-
-    });
-</script>
-
-@endpush

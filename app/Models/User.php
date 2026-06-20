@@ -9,15 +9,12 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
-use \App\Models\Role;
-use App\Imports\UsersImport;
+use App\Models\Role;
 use App\Utils\ValidarIdentificacion;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Models\StudentGroup;
 use App\Utils\Horarios;
 
-// class User extends Authenticatable
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens;
@@ -36,6 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'username',
         'last_name',
         'cellphone',
         'fixedphone',
@@ -91,6 +89,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_photo_url',
     ];
 
+    protected $with = [
+        'roles',
+    ];
+
+    protected $cachedAbilities;
+
 
     public function roles()
     {
@@ -103,11 +107,26 @@ class User extends Authenticatable implements MustVerifyEmail
             $role = Role::whereName($role)->firstOrFail();
         }
         $this->roles()->sync($role, false);
+        $this->unsetRelation('roles');
+        $this->cachedAbilities = null;
     }
 
     public function abilities()
     {
-        return $this->roles->map->abilities->flatten()->pluck('name')->unique();
+        if ($this->cachedAbilities !== null) {
+            return $this->cachedAbilities;
+        }
+
+        $this->loadMissing('roles.abilities');
+
+        $this->cachedAbilities = $this->roles
+            ->pluck('abilities')
+            ->flatten()
+            ->pluck('name')
+            ->unique()
+            ->values();
+
+        return $this->cachedAbilities;
     }
 
     // por el momento solo acepta un rol a la vez
@@ -123,20 +142,18 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getPaymentDeadline()
     {
         // -1 si es nulo en la base
-        if (is_null($this->payment_day)) {
+        if (is_null($this->payment_day) || trim($this->payment_day) === '') {
             return -1;
         }
         // aislar solo el numero
         preg_match_all('!\d+!', $this->payment_day, $matches);
 
-        return $matches[0][0];
-    }
+        if (empty($matches[0])) {
+            return -1;
+        }
 
-    // public function getExamMonth()
-    // {
-    //     // convertir minusculas
-    //     return strtolower($this->fecha_examen);
-    // }
+        return (int) end($matches[0]);
+    }
 
     public function getExamMonth()
     {
@@ -178,20 +195,27 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function adeuda()
     {
-        return  !$this->status;
+        return false;
     }
 
     public function diapago()
     {
-        return $this->diapago;
+        if (
+            array_key_exists('diapago', $this->attributes)
+            && !is_null($this->attributes['diapago'])
+            && trim($this->attributes['diapago']) !== ''
+        ) {
+            return (int) $this->attributes['diapago'];
+        }
+
+        return $this->getPaymentDeadline();
     }
 
-    public function cedulaPadre()
+    public function hasCedulaPadre()
     {
-        if (!isset($this->cedulaPadre) || trim($this->cedulaPadre) === '')
-            return false;
-        else
-            return true;
+        $cedulaPadre = $this->attributes['cedulaPadre'] ?? null;
+
+        return isset($cedulaPadre) && trim($cedulaPadre) !== '';
     }
 
     public function getPaymentDeadlineExcel()
@@ -229,6 +253,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(CourseSession::class, 'attendances');
     }
 
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
     public function encuestas()
     {
         return $this->hasMany(Encuesta::class);
@@ -247,15 +276,20 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function scopeStudents($query)
     {
-        return $query->join('role_user', 'users.id', '=', 'role_user.user_id')
-            ->where('role_id', '=', 2);
+        return $query->whereHas('roles', function ($q) {
+            $q->where('role_id', 2);
+        });
     }
 
     public function horario()
     {
-        // $exam_month = $student->getExamMonth();
+        $this->loadMissing('student_group');
         $std_grp = $this->student_group;
-        // dd($std_grp);
+
+        if (!$std_grp || !$std_grp->code) {
+            return [];
+        }
+
         $horarios_obj = new Horarios;
         return $horarios_obj->get_horario($std_grp->code);
     }

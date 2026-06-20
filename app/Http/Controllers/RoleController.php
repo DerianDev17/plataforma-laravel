@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use Illuminate\Http\Request;
-use App\Models\Roles;
-use Illuminate\Http\Response;
 
 class RoleController extends Controller
 {

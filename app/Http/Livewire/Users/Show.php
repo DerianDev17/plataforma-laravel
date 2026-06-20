@@ -22,7 +22,7 @@ class Show extends Component
         $searchTerm = '%'.$this->searchTerm.'%';
 
         return view('livewire.users.show', [
-            'users' => User::where('email', 'like', $searchTerm)->paginate(150),
+            'users' => User::where('email', 'like', $searchTerm)->paginate(30),
         ]);
     }
 }

@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ability;
-use App\Models\Role;
 use Illuminate\Http\Request;
-use App\Models\Roles;
-use Illuminate\Http\Response;
 
 class AbilitiesController extends Controller
 {

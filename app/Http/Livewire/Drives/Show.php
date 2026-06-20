@@ -2,16 +2,16 @@
 
 namespace App\Http\Livewire\Drives;
 
+use App\Http\Livewire\Concerns\AuthorizesLivewireActions;
 use App\Models\Drive;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-
 use Livewire\WithPagination;
 
 
 class Show extends Component
 {
     use WithPagination;
+    use AuthorizesLivewireActions;
 
     public $modulo;
     public $materia;
@@ -24,17 +24,21 @@ class Show extends Component
 
     public function render()
     {
-        $searchTerm = '%' . $this->searchTerm . '%';
-        
-        $drives = DB::table('drives')
-            ->join('courses', 'drives.course_id', '=', 'courses.id')
-            ->select('drives.*', 'courses.code')
-            ->where('courses.code', 'like', '%'.$searchTerm.'%')
-            ->orWhere('drives.materia', 'like', '%'.$searchTerm.'%')
-            ->orWhere('drives.modulo', 'like', '%'.$searchTerm.'%')
-            ->paginate(25);
+        $this->authorizeAbility('crud_drives');
 
-        // dd();
+        $searchTerm = '%' . $this->searchTerm . '%';
+
+        $drives = Drive::query()
+            ->when($this->searchTerm, function ($q) use ($searchTerm) {
+                $q->where(function ($q) use ($searchTerm) {
+                    $q->where('materia', 'like', $searchTerm)
+                      ->orWhere('modulo', 'like', $searchTerm)
+                      ->orWhereHas('course', function ($cq) use ($searchTerm) {
+                          $cq->where('code', 'like', $searchTerm);
+                      });
+                });
+            })
+            ->paginate(25);
 
         return view('livewire.drives.show', [
             'drives' => $drives,
@@ -43,6 +47,8 @@ class Show extends Component
 
     public function create()
     {
+        $this->authorizeAbility('crud_drives');
+
         $this->resetInputFields();
         $this->openModal();
     }
@@ -70,6 +76,8 @@ class Show extends Component
 
     public function store()
     {
+        $this->authorizeAbility('crud_drives');
+
         $this->validate([
             // 'modulo' => 'required|unique:drives,modulo,' . $this->drive_id,
             'modulo' => 'required',
@@ -94,6 +102,8 @@ class Show extends Component
 
     public function edit($id)
     {
+        $this->authorizeAbility('crud_drives');
+
         $drive = Drive::findOrFail($id);
         $this->drive_id = $id;
         $this->modulo = $drive->modulo;
@@ -106,8 +116,10 @@ class Show extends Component
 
     public function delete($id)
     {
+        $this->authorizeAbility('crud_drives');
+
         $this->drive_id = $id;
-        Drive::find($id)->delete();
+        Drive::findOrFail($id)->delete();
         session()->flash('message', 'Enlace eliminado correctamente.');
     }
 }

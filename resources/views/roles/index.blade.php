@@ -1,4 +1,4 @@
-<x-landing.layout>
+<x-app-layout>
     <div class="container">
         <a href="roles/create" class="btn btn-success">Crear Nuevo Rol</a>
 
@@ -19,7 +19,11 @@
                         <td>
                             <a href="/roles/{{$rol->id}}/show" class="btn btn-info">Ver</a>
                             <a href="/roles/{{$rol->id}}/edit" class="btn btn-warning">Edit</a>
-                            <a onclick="return confirm('Are you sure?')" href="/roles/{{$rol->id}}" class="btn btn-danger">Delete</a>
+                            <form style="display:inline" method="POST" action="/roles/{{$rol->id}}" onsubmit="return confirm('Are you sure?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     @endforeach
@@ -27,4 +31,4 @@
             </table>
         </div>
     </div>
-    </x-landing-layout>
+    </x-app-layout>

@@ -5,6 +5,7 @@ namespace App\View\Components;
 use App\Models\User;
 use App\Utils\Horarios;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\Component;
 
 class AppLayout extends Component
@@ -16,8 +17,18 @@ class AppLayout extends Component
     public function getTodaySessions()
     {
         $user = auth()->user();
-        // dd($user->exam_month);
 
+        if (!$user) return [];
+
+        $cacheKey = 'layout.today_sessions.' . $user->id . '.' . ($user->student_group_id ?: 'none') . '.' . Carbon::today()->toDateString();
+
+        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($user) {
+            return $this->buildTodaySessions($user);
+        });
+    }
+
+    private function buildTodaySessions(User $user): array
+    {
         $horario = $this->get_horario_estudiante($user);
 
         if (!$horario) return [];
@@ -83,7 +94,8 @@ class AppLayout extends Component
     public function render()
     {
         $this->today_sessions = $this->getTodaySessions();
-        // dd($this->today_sessions);
-        return view('layouts.app');
+        return view('layouts.admin', [
+            'today_sessions' => $this->today_sessions,
+        ]);
     }
 }

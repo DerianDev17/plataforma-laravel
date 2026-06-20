@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 120" role="img" aria-labelledby="title desc">
+  <title id="title">Semilla Digital</title>
+  <desc id="desc">Logo horizontal sin borde de Semilla Digital con isotipo de semilla y wordmark.</desc>
+  <defs>
+    <linearGradient id="stem-grad" x1="31" y1="24" x2="87" y2="102" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f4f3b"/>
+      <stop offset="0.6" stop-color="#2f855a"/>
+      <stop offset="1" stop-color="#c96f1a"/>
+    </linearGradient>
+    <linearGradient id="left-leaf" x1="22" y1="21" x2="69" y2="89" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d6f1df"/>
+      <stop offset="0.45" stop-color="#67b47d"/>
+      <stop offset="1" stop-color="#1f4f3b"/>
+    </linearGradient>
+    <linearGradient id="right-leaf" x1="55" y1="51" x2="104" y2="97" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8d7a6"/>
+      <stop offset="1" stop-color="#c96f1a"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <g fill="#2f855a" opacity="0.28">
+      <rect x="18" y="32" width="7" height="7" rx="1.8"/>
+      <rect x="32" y="23" width="5.5" height="5.5" rx="1.4"/>
+      <rect x="92" y="35" width="7" height="7" rx="1.8"/>
+      <rect x="103" y="50" width="5.5" height="5.5" rx="1.4"/>
+      <rect x="19" y="91" width="5.5" height="5.5" rx="1.4"/>
+      <rect x="88" y="96" width="8" height="8" rx="2"/>
+    </g>
+    <path d="M61 90C46.1 83.5 36.2 70.8 36.2 56.2c0-7.9 2.9-15.2 7.9-21 15.4 6.3 25.5 19.5 25.5 34.7 0 7.5-2.6 14.5-8.6 20.1Z" fill="url(#left-leaf)"/>
+    <path d="M61.6 90.2c14.2-5.8 24.2-17.7 26.6-31.8-8.5-1.2-16.8 1.1-23.2 6.4-6.7 5.6-10.2 14.1-9.8 23.6 1.9.9 4.1 1.5 6.4 1.8Z" fill="url(#right-leaf)"/>
+    <path d="M60.9 91.2c1.5-21.5-4.1-38.5-16.8-50.9" fill="none" stroke="url(#stem-grad)" stroke-width="5.4" stroke-linecap="round"/>
+    <path d="M61.2 90.8c5-12.5 12.6-21.7 23-27.6" fill="none" stroke="#91400d" stroke-width="5.4" stroke-linecap="round"/>
+    <circle cx="60.9" cy="93.2" r="8" fill="#fffefa"/>
+    <circle cx="60.9" cy="93.2" r="3.8" fill="#c96f1a"/>
+  </g>
+  <g fill="#17221b">
+    <text x="124" y="56" font-family="Fraunces, Georgia, serif" font-size="42" font-weight="800" letter-spacing="0">Semilla</text>
+    <text x="124" y="88" font-family="Manrope, Arial, sans-serif" font-size="30" font-weight="800" letter-spacing="0">Digital</text>
+  </g>
+  <path d="M124 99h184" stroke="#c96f1a" stroke-width="5" stroke-linecap="round"/>
+  <g fill="#2f855a" opacity="0.48">
+    <rect x="336" y="38" width="8" height="8" rx="2"/>
+    <rect x="353" y="38" width="8" height="8" rx="2"/>
+    <rect x="370" y="38" width="8" height="8" rx="2"/>
+    <rect x="353" y="55" width="8" height="8" rx="2"/>
+    <rect x="370" y="55" width="8" height="8" rx="2"/>
+    <rect x="387" y="55" width="8" height="8" rx="2"/>
+    <rect x="370" y="72" width="8" height="8" rx="2"/>
+    <rect x="387" y="72" width="8" height="8" rx="2"/>
+    <rect x="404" y="72" width="8" height="8" rx="2"/>
+  </g>
+</svg>

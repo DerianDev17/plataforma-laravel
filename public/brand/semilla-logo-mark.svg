@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Semilla Digital</title>
+  <desc id="desc">Isotipo sin borde de Semilla Digital con semilla, brote y puntos digitales.</desc>
+  <defs>
+    <linearGradient id="stem-grad" x1="35" y1="25" x2="92" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f4f3b"/>
+      <stop offset="0.6" stop-color="#2f855a"/>
+      <stop offset="1" stop-color="#c96f1a"/>
+    </linearGradient>
+    <linearGradient id="left-leaf" x1="25" y1="20" x2="72" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d6f1df"/>
+      <stop offset="0.45" stop-color="#67b47d"/>
+      <stop offset="1" stop-color="#1f4f3b"/>
+    </linearGradient>
+    <linearGradient id="right-leaf" x1="58" y1="52" x2="108" y2="98" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8d7a6"/>
+      <stop offset="1" stop-color="#c96f1a"/>
+    </linearGradient>
+  </defs>
+  <g fill="#2f855a" opacity="0.28">
+    <rect x="18" y="28" width="8" height="8" rx="2"/>
+    <rect x="34" y="18" width="6" height="6" rx="1.5"/>
+    <rect x="95" y="31" width="8" height="8" rx="2"/>
+    <rect x="107" y="48" width="6" height="6" rx="1.5"/>
+    <rect x="20" y="92" width="6" height="6" rx="1.5"/>
+    <rect x="91" y="101" width="9" height="9" rx="2.2"/>
+    <rect x="109" y="84" width="5" height="5" rx="1.4"/>
+  </g>
+  <path d="M62.4 94.9C43.7 86.7 31.2 70.8 31.2 52.5c0-9.9 3.6-19.1 9.9-26.4 19.3 7.9 32 24.5 32 43.5 0 9.5-3.3 18.2-10.7 25.3Z" fill="url(#left-leaf)"/>
+  <path d="M63.1 95.1c17.8-7.2 30.3-22.1 33.3-39.8-10.6-1.5-21.1 1.3-29 8-8.3 7-12.8 17.7-12.3 29.6 2.5 1.1 5.2 1.8 8 2.2Z" fill="url(#right-leaf)"/>
+  <path d="M62.2 96.4c1.9-26.9-5.1-48.1-21-63.6" fill="none" stroke="url(#stem-grad)" stroke-width="6.5" stroke-linecap="round"/>
+  <path d="M62.7 95.8c6.2-15.6 15.8-27.1 28.8-34.5" fill="none" stroke="#91400d" stroke-width="6.5" stroke-linecap="round"/>
+  <circle cx="62.4" cy="98.8" r="10" fill="#fffefa"/>
+  <circle cx="62.4" cy="98.8" r="4.8" fill="#c96f1a"/>
+</svg>

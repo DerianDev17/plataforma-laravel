@@ -1,15 +1,20 @@
-<!-- <div class="min-h-screen flex flex-col sm:justify-center bg-green-800 bg-opacity-100 items-center pt-6 sm:py-6 bg-gray-100"> -->
-<div class="min-h-screen flex flex-col sm:justify-center bg-opacity-50 items-center pt-6 sm:py-6 " style="background-image: url(&quot;/storage/img/fondo.jpeg&quot;);">
-    <div>
-        {{ $logo }}
-    </div>
+<x-auth.shell compact>
+    <div class="eus-card auth-compact-card">
+        <div class="eus-card-body auth-compact-body">
+            <div>
+                {{ $logo }}
+            </div>
 
-    <div class="w-full sm:max-w-2xl mt-6 px-6 py-4 bg-white bg-opacity-50 shadow-md overflow-hidden sm:rounded-lg">
-        {{ $slot }}
+            <div class="mt-6">
+                {{ $slot }}
+            </div>
+
+            <div class="auth-help">
+                <p>
+                    En caso de que tenga alg&uacute;n inconveniente para ingresar, puede escribir un correo a
+                    <a href="mailto:soporte@semilladigital.com">soporte@semilladigital.com</a>.
+                </p>
+            </div>
+        </div>
     </div>
-    <div class="mt-8 text-sm">
-        <p style="font-weight: bold; color: white;">En caso de que tenga algún inconveniente para ingresar, puede
-            escribir un correo a <a href="mailto:soporte@eus3pre.com">soporte@eus3pre.com</a>
-        </p>
-    </div>
-</div>
+</x-auth.shell>

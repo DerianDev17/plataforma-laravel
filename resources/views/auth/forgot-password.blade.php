@@ -1,36 +1,50 @@
 <x-guest-layout>
-    <x-jet-authentication-card>
-        <x-slot name="logo">
-            <x-jet-authentication-card-logo />
-        </x-slot>
+    <x-auth.shell compact>
+        <div class="eus-card auth-compact-card">
+            <div class="eus-card-body auth-compact-body">
+                <x-auth.panel-header
+                    eyebrow="Acceso"
+                    title="Recuperar contrase&ntilde;a"
+                    center
+                    mobile-logo
+                />
 
-        <div class="mb-4 text-sm text-gray-600">
-            <p class="text-red-600">¡Atención!</p>
-            Le enviaremos un enlace para restablecer la contraseña que le permitirá elegir una nueva.
-            <p class="text-red-800">Por favor, revisar en el correo spam en caso de que no le llegue el email a su buzón de correo electrónico principal.</p>
-        </div>
+                <div class="eus-alert eus-alert-info">
+                    <span>
+                        <strong>&iexcl;Atenci&oacute;n!</strong>
+                        Le enviaremos un enlace para restablecer la contrase&ntilde;a que le permitir&aacute; elegir una nueva.
+                    </span>
+                </div>
+                <div class="eus-alert eus-alert-warning">
+                    Por favor, revise el correo spam si el email no llega a su buz&oacute;n principal.
+                </div>
 
-        @if (session('status'))
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ session('status') }}
-        </div>
-        @endif
+                @if (session('status'))
+                    <div class="eus-alert eus-alert-success" role="status">
+                        {{ session('status') }}
+                    </div>
+                @endif
 
-        <x-jet-validation-errors class="mb-4" />
+                <x-jet-validation-errors class="auth-alert-gap eus-alert eus-alert-danger" role="alert" />
 
-        <form method="POST" action="{{ route('password.email') }}">
-            @csrf
+                <form method="POST" action="{{ route('password.email') }}" class="auth-form-stack" novalidate>
+                    @csrf
 
-            <div class="block">
-                <x-jet-label for="email" value="{{ __('Email') }}" />
-                <x-jet-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
+                    <div>
+                        <label for="email" class="eus-label eus-label-required">Email</label>
+                        <input id="email" class="eus-input" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email" aria-required="true">
+                    </div>
+
+                    <div class="auth-form-actions">
+                        <a class="auth-secondary-link" href="{{ route('login') }}">
+                            &larr; Volver al inicio de sesi&oacute;n
+                        </a>
+                        <button type="submit" class="eus-btn eus-btn-primary">
+                            Enviar enlace
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <div class="flex items-center justify-end mt-4">
-                <x-jet-button>
-                    {{ __('Enviar enlace de restablecimiento de contraseña ') }}
-                </x-jet-button>
-            </div>
-        </form>
-    </x-jet-authentication-card>
+        </div>
+    </x-auth.shell>
 </x-guest-layout>

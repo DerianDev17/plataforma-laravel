@@ -2,18 +2,16 @@
 
 namespace App\Http\Livewire\Meetings;
 
-use App\Http\Livewire\Attendances\Attendances;
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSession;
+use App\Models\StudentGroup;
 use App\Models\User;
 use Livewire\Component;
 use App\Traits\ZoomJWT;
 use App\Utils\Horarios;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-
-use function Psy\debug;
+use Illuminate\Support\Facades\Cache;
 
 class Show extends Component
 {
@@ -26,20 +24,27 @@ class Show extends Component
     public $horario;
     public $zoom_link;
     public $show_alert = false;
+    public $scheduleGroups = [];
+    public $studentGroupName;
+    public $studentGroupCode;
+    public $currentScheduleDay;
 
     public function check_payment($student)
     {
-        return  $student->status;
+        return true;
     }
 
     public $today_sessions;
 
     // retorna una array [['hora1', 'materia1'], ['hora2', 'materia2'],...]
-    public function getTodaySessions()
+    public function getTodaySessions($horario = null)
     {
-        $user = auth()->user();
+        if ($horario === null) {
+            $user = auth()->user();
+            $horario = $this->get_horario_estudiante($user);
+        }
 
-        $horario = $this->get_horario_estudiante($user);
+        if (!$horario) return [];
         // dd($horario);
         $horario = $this->transposeData($horario);
         if (!$horario) return [];
@@ -113,17 +118,61 @@ class Show extends Component
     public function mount()
     {
         $user = auth()->user();
+        $user->loadMissing('student_group');
 
         $this->user = $user;
+        $this->studentGroupName = $user->student_group->name ?? null;
+        $this->studentGroupCode = $user->student_group->code ?? null;
+        $this->currentScheduleDay = (int) Carbon::now()->dayOfWeekIso;
 
         $this->zoom_link = $this->get_zoom_link_estudiante($user);
 
         $this->horario = $this->get_horario_estudiante($user);
 
-        $this->today_sessions = $this->getTodaySessions();
+        $this->today_sessions = $this->getTodaySessions($this->horario);
+        $this->scheduleGroups = $this->buildScheduleGroups($user);
 
         // dd($this->today_sessions);
         
+    }
+
+    private function buildScheduleGroups(User $user): array
+    {
+        $user->loadMissing('student_group');
+
+        if ($user->hasRole('student')) {
+            $group = $user->student_group;
+
+            if (!$group || !$group->code || $group->code === 'Z') {
+                return [];
+            }
+
+            return [[
+                'name' => $group->name,
+                'code' => $group->code,
+                'schedule' => $this->horario,
+            ]];
+        }
+
+        return Cache::remember('meetings.schedule_groups.all', now()->addHours(6), function () {
+            $horarios = new Horarios();
+
+            return StudentGroup::valids()
+                ->orderBy('id')
+                ->get()
+                ->map(function (StudentGroup $group) use ($horarios) {
+                    return [
+                        'name' => $group->name,
+                        'code' => $group->code,
+                        'schedule' => $horarios->get_horario($group->code),
+                    ];
+                })
+                ->filter(function (array $group) {
+                    return !empty($group['schedule']);
+                })
+                ->values()
+                ->all();
+        });
     }
 
     public function get_student_meetings($student)
@@ -159,13 +208,9 @@ class Show extends Component
 
     function checkExistingAttendance($course_session_id, $user_id)
     {
-        $found_attendance = DB::table('attendances')
-            ->where('course_session_id', $course_session_id)
+        return Attendance::where('course_session_id', $course_session_id)
             ->where('user_id', $user_id)
-            ->first();
-
-        if ($found_attendance) return true;
-        return false;
+            ->exists();
     }
 
     /**
@@ -179,7 +224,6 @@ class Show extends Component
     public function registAttendance($materia, $hora_clase)
     {
 
-        dd($materia, $hora_clase);
         $time_now = Carbon::now();
 
         $time_session = Carbon::now();
@@ -199,13 +243,23 @@ class Show extends Component
             $this->show_alert = true;
             session()->flash(
                 'error',
-                'Solo puede registrar su asistencia hasta 15 minutos después de inciada la clase.'
+                'Solo puede registrar su asistencia hasta 59 minutos despues de iniciada la clase.'
             );
         } else {
             // permitido ingresar una asistencia
             $user = auth()->user();
+            $user->loadMissing('student_group');
+            $std_grp_id = $user->student_group_id;
 
-            $std_grp_id = $user->student_group->id;
+            if (!$std_grp_id) {
+                $this->show_alert = true;
+                session()->flash(
+                    'error',
+                    'No tiene un paralelo asignado.'
+                );
+                return;
+            }
+
             // dd($std_grp_id);
             // $course_id = $this->getCourseid($user);
             $date = Carbon::today()->toDateString();
@@ -258,7 +312,6 @@ class Show extends Component
     /*public function registParalelo($paraleloA, $paraleloB)
     {
 
-        dd($paraleloA, $paraleloB);
         // permitido ingresar una asistencia
         $user = auth()->user();
         
@@ -302,28 +355,63 @@ class Show extends Component
     {
         $date = Carbon::today()->toDateString();
         $logged_user = auth()->user();
-        $std_grp_id = $logged_user->student_group->id;
+        $logged_user->loadMissing('student_group');
+        $std_grp_id = $logged_user->student_group_id;
 
-        $clase = CourseSession::where('date', $date)
-            ->where('time', $datos_reunion[0] . ':00')
-            ->where('student_groups_id', $std_grp_id)
-            ->first();
-
-        if (!$clase) {
+        if (!$std_grp_id) {
             return false;
         }
 
-        $found_user = $clase->users->first(function ($user, $key) use ($logged_user) {
-            return $user->id == $logged_user->id;
-        });
-        return $found_user ? true : false;
+        return CourseSession::where('date', $date)
+            ->where('time', $datos_reunion[0] . ':00')
+            ->where('student_groups_id', $std_grp_id)
+            ->whereHas('users', function ($q) use ($logged_user) {
+                $q->where('user_id', $logged_user->id);
+            })
+            ->exists();
+    }
+
+    private function attendedTimesForToday(): array
+    {
+        $logged_user = auth()->user();
+        $logged_user->loadMissing('student_group');
+        $std_grp_id = $logged_user->student_group_id;
+
+        if (!$std_grp_id || empty($this->today_sessions)) {
+            return [];
+        }
+
+        $times = collect($this->today_sessions)
+            ->map(function ($session) {
+                return isset($session[0]) ? $session[0] . ':00' : null;
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($times->isEmpty()) {
+            return [];
+        }
+
+        return CourseSession::where('date', Carbon::today()->toDateString())
+            ->where('student_groups_id', $std_grp_id)
+            ->whereIn('time', $times)
+            ->whereHas('users', function ($q) use ($logged_user) {
+                $q->where('user_id', $logged_user->id);
+            })
+            ->pluck('time')
+            ->flip()
+            ->all();
     }
 
     public function render()
     {
-        foreach ($this->today_sessions as $i => $ts) {
+        $attendedTimes = $this->attendedTimesForToday();
+
+        foreach ((array) $this->today_sessions as $i => $ts) {
             // crear un nuevo elemento en el array con dato asistencia o ausencia
-            $this->today_sessions[$i]['asistio'] = $this->asisitioReunion($ts);
+            $time = isset($ts[0]) ? $ts[0] . ':00' : null;
+            $this->today_sessions[$i]['asistio'] = $time && array_key_exists($time, $attendedTimes);
         }
         // dd($this->today_sessions);
         return view('livewire.meetings.show');

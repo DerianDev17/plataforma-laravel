@@ -19,9 +19,10 @@ class PermissionsSeeder extends Seeder
     public function run()
     {
 
-        $admin = new User();
+        $admin = User::firstOrNew(['email' => 'admin@mail.com']);
         $admin->name =                      'John';
         $admin->email =                     'admin@mail.com';
+        $admin->username =                  'superadmin';
         $admin->email_verified_at =         now();
         $admin->password =                  Hash::make('holahola14');
         $admin->remember_token =            Str::random(10);
@@ -62,29 +63,41 @@ class PermissionsSeeder extends Seeder
         // ]); // id: 11
 
         // roles
-        DB::table('roles')->insert([
+        DB::table('roles')->updateOrInsert(['id' => 1], [
             'name' => 'superadmin',
+            'updated_at' => now(),
+            'created_at' => now(),
         ]);
 
-        DB::table('roles')->insert([
+        DB::table('roles')->updateOrInsert(['id' => 2], [
             'name' => 'student',
+            'updated_at' => now(),
+            'created_at' => now(),
         ]);
 
         // permisos
-        DB::table('abilities')->insert([
+        DB::table('abilities')->updateOrInsert(['id' => 1], [
             'name' => 'watch_lessons',
+            'updated_at' => now(),
+            'created_at' => now(),
         ]);
 
         // asignar permisos a un rol
-        DB::table('ability_role')->insert([
+        DB::table('ability_role')->updateOrInsert([
             'ability_id' => 1,
             'role_id' => 2,
+        ], [
+            'updated_at' => now(),
+            'created_at' => now(),
         ]);
 
         // superadmin
-        DB::table('role_user')->insert([
+        DB::table('role_user')->updateOrInsert([
             'user_id' => $admin->id,
             'role_id' => 1,
+        ], [
+            'updated_at' => now(),
+            'created_at' => now(),
         ]);
 
         // // estudiantes

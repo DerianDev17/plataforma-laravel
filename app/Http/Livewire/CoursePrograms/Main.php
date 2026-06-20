@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\CoursePrograms;
 
+use App\Http\Livewire\Concerns\AuthorizesLivewireActions;
 use App\Models\CourseProgram;
 use App\Models\CourseProgramTopic;
 use App\Models\ResourceFile;
@@ -18,6 +19,7 @@ use Livewire\WithFileUploads;
 class Main extends Component
 {
     use WithFileUploads;
+    use AuthorizesLivewireActions;
 
     protected $listeners = [
         'updateTopic' => 'update_topic',
@@ -63,16 +65,63 @@ class Main extends Component
 
     ];
 
+    private function authorizeCourseProgramRead(): void
+    {
+        abort_unless(
+            auth()->check()
+                && (auth()->user()->can('read_course_programs') || auth()->user()->can('crud_course_programs')),
+            403
+        );
+    }
+
+    private function authorizeCourseProgramMutation(): void
+    {
+        $this->authorizeAbility('crud_course_programs');
+    }
+
+    private function authorizeResourceAccess(TopicResource $resource): void
+    {
+        if ($this->curr_user && $this->curr_user->can('crud_course_programs')) {
+            return;
+        }
+
+        abort_unless(
+            $this->curr_user
+                && $this->curr_user->student_group_id
+                && (int) $resource->student_groups_id === (int) $this->curr_user->student_group_id,
+            403
+        );
+    }
+
+    private function selectedCourseRelations(): array
+    {
+        return [
+            'topics.resources.resource_url',
+            'topics.resources.resource_file',
+        ];
+    }
+
+    private function loadSelectedCourse($courseId): void
+    {
+        $this->selected_course = CourseProgram::with($this->selectedCourseRelations())->findOrFail($courseId);
+        $this->selected_course_id = $this->selected_course->id;
+    }
+
     public function mount()
     {
+        $this->authorizeCourseProgramRead();
+
         // el usuario se utiliza, por el momento para el manejo de permisos
         $this->curr_user = Auth::user();
+        $this->curr_user->loadMissing('student_group');
 
         // los cursos son las materias que se dictan
         $this->courses = CourseProgram::all();
 
         // seleccionar el curso que se mostrará por defecto
-        $this->selected_course = CourseProgram::find($this->courses[0]->id);
+        if ($this->courses->isNotEmpty()) {
+            $this->loadSelectedCourse($this->courses->first()->id);
+        }
 
         $this->student_groups = StudentGroup::valids()->get();
 
@@ -105,6 +154,8 @@ class Main extends Component
 
     public function addTopic()
     {
+        $this->authorizeCourseProgramMutation();
+
         // dd($this->new_topic_title);
         if ($this->new_topic_title == '') {
             return;
@@ -119,7 +170,9 @@ class Main extends Component
 
     public function deleteTopic($id_topic)
     {
-        $topic = CourseProgramTopic::find($id_topic);
+        $this->authorizeCourseProgramMutation();
+
+        $topic = CourseProgramTopic::findOrFail($id_topic);
         $topic->delete();
 
         $this->refreshData();
@@ -127,7 +180,9 @@ class Main extends Component
 
     public function update_topic($data)
     {
-        $topic_obj = CourseProgramTopic::find($data['topicId']);
+        $this->authorizeCourseProgramMutation();
+
+        $topic_obj = CourseProgramTopic::findOrFail($data['topicId']);
         $topic_obj->topic_title = $data['title'];
         // dd($topic_obj);
         $topic_obj->save();
@@ -150,6 +205,8 @@ class Main extends Component
 
     public function prepareToAddResource($id_topic)
     {
+        $this->authorizeCourseProgramMutation();
+
         $this->resetResourceVariables();
         $this->updatingTopicId = $id_topic;
         $this->openModal();
@@ -157,9 +214,11 @@ class Main extends Component
 
     public function prepareToEditResource($id_resource)
     {
+        $this->authorizeCourseProgramMutation();
+
         $this->isEditingResource = true;
 
-        $resource_model = TopicResource::find($id_resource);
+        $resource_model = TopicResource::findOrFail($id_resource);
 
         $this->resourceId = $resource_model->id;
         $this->resTitle = $resource_model->resource_title;
@@ -179,6 +238,8 @@ class Main extends Component
 
     public function saveResource()
     {
+        $this->authorizeCourseProgramMutation();
+
         if (!$this->isEditingResource) {
             $this->createResource();
         } else {
@@ -192,7 +253,9 @@ class Main extends Component
 
     public function updateResource($resource_id)
     {
-        $resource = TopicResource::find($resource_id);
+        $this->authorizeCourseProgramMutation();
+
+        $resource = TopicResource::findOrFail($resource_id);
         // dd($this->resourceId);
         $resource->resource_title = $this->resTitle;
         $resource->type = $this->res_type;
@@ -221,6 +284,8 @@ class Main extends Component
 
     public function createResource()
     {
+        $this->authorizeCourseProgramMutation();
+
         $this->validateResourceForm($this->res_type);
         $resource = new TopicResource();
         $resource->topic_id = $this->updatingTopicId;
@@ -246,7 +311,12 @@ class Main extends Component
 
     public function downloadResourceFile($id_resource)
     {
-        $download_resourceFile = ResourceFile::find($id_resource);
+        $this->authorizeCourseProgramRead();
+
+        $download_resourceFile = ResourceFile::findOrFail($id_resource);
+        $resource = TopicResource::findOrFail($download_resourceFile->topic_resource_id);
+        $this->authorizeResourceAccess($resource);
+
         return response()->download(storage_path('app/' . $download_resourceFile->path));
     }
 
@@ -272,21 +342,22 @@ class Main extends Component
     {
         $this->selected_course_id = intval($this->selected_course_id);
         $this->setSelectedStudentGroupId();
-        $this->selected_course = CourseProgram::find($this->selected_course_id);
+        $this->refreshData();
 
         // emitir evento para que se vuelva a ejecutar el js que habilita el drag and drop
         $this->emit('selectHasChanged');
-
-        $this->refreshData();
     }
 
     // el estudiante no debe tener acceso a la info de otros paralelos.
     function setSelectedStudentGroupId()
     {
         if ($this->curr_user->cannot('crud_course_programs')) {
+            $this->curr_user->loadMissing('student_group');
+            abort_unless($this->curr_user->student_group, 403);
             $this->selected_group_id = $this->curr_user->student_group->id;
         } else {
-            $this->selected_group_id = $this->student_groups[0]->id;
+            $firstGroup = $this->student_groups->first();
+            $this->selected_group_id = $firstGroup ? $firstGroup->id : null;
         }
     }
 
@@ -296,6 +367,8 @@ class Main extends Component
 
     public function studentGroupChange()
     {
+        $this->authorizeCourseProgramMutation();
+
         $this->selected_group_id = intval($this->selected_group_id);
 
         $this->refreshData();
@@ -306,27 +379,40 @@ class Main extends Component
 
     public function filterResources()
     {
+        if (!$this->selected_course || !$this->selected_group_id) {
+            return;
+        }
+
         // filtrar recursos de paralelo especifico
         foreach ($this->selected_course->topics as $topic) {
             // dd($topic->resources);
-            $topic->resources = $topic->resources
+            $topic->setRelation('resources', $topic->resources
                 ->filter(function ($resc) {
                     return $resc->student_groups_id == $this->selected_group_id;
                 })
-                ->sortBy('order');
+                ->sortBy('order')
+                ->values());
         }
     }
 
     public function refreshData()
     {
-        $this->selected_course = $this->selected_course->fresh();
+        $courseId = $this->selected_course_id ?: ($this->selected_course ? $this->selected_course->id : null);
+
+        if (!$courseId) {
+            return;
+        }
+
+        $this->loadSelectedCourse($courseId);
         // dd($this->selected_course);
         $this->filterResources();
     }
 
     public function deleteResource($resource_id)
     {
-        $resource_model = TopicResource::find($resource_id);
+        $this->authorizeCourseProgramMutation();
+
+        $resource_model = TopicResource::findOrFail($resource_id);
         if ($resource_model->resource_url) {
         } elseif ($resource_model->resource_file) {
             Storage::delete($resource_model->resource_file->path);
@@ -339,8 +425,10 @@ class Main extends Component
 
     public function updateOrdering($data)
     {
+        $this->authorizeCourseProgramMutation();
+
         foreach ($data['orders'] as $order) {
-            $res = TopicResource::find($order['resourceId']);
+            $res = TopicResource::findOrFail($order['resourceId']);
             $res->order = $order['order'];
             $res->save();
         }
@@ -349,6 +437,8 @@ class Main extends Component
 
     public function render()
     {
+        $this->authorizeCourseProgramRead();
+
         $this->refreshData();
         return view('livewire.course-programs.main');
     }

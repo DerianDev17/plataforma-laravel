@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Semilla Digital'),
 
     /*
     |--------------------------------------------------------------------------
@@ -238,7 +238,7 @@ return [
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
 
         // pdf
-        'PDF' => Barryvdh\DomPDF\Facade::class,
+        'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
 
     ],
 

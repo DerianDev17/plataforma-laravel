@@ -1,10 +1,10 @@
 <div class="p-6 sm:px-20 bg-white border-b border-gray-200 grid grid-cols-6 gap-4">
-  <div class="col-span-6 md:col-span-2">
-    <img class="" src="/storage/img/eus-logo.png" />
+  <div class="col-span-6 flex items-center justify-center md:col-span-2">
+    <x-brand.logo class="brand-logo-welcome" />
   </div>
   <div class="col-span-6 md:col-span-4">
     <div class="mt-8 text-2xl">
-      Bienvenido a EUS3
+      Bienvenido a Semilla Digital
     </div>
 
     <div class="mt-6 text-gray-500 text-2xl">
@@ -144,7 +144,7 @@ $user = Auth::user();
 
     <div class="ml-12">
       <div class="mt-2 text-sm text-gray-500">
-        Eus3 te facilita una gran cantidad de recursos que cubren cada aspecto de las temáticas evaluadas en el EAES. Recomendamos
+        Semilla Digital te facilita una gran cantidad de recursos que cubren cada aspecto de las temáticas evaluadas en el EAES. Recomendamos
         que uses estos materiales para reforzar las clases.
       </div>
       <a href="{{ route('material_digital') }}">
@@ -212,11 +212,11 @@ $user = Auth::user();
           <strong>Tipo de Cuenta: </strong>Ahorros<br>
           <strong>Número de cuenta: </strong>1621086357<br>
           <br> -->
-  <strong>Nombre: </strong>Eus3 Preuniversitario<br>
+  <strong>Nombre: </strong>Semilla Digital<br>
   <!-- <strong>Cédula: </strong>1717715773<br> -->
   <strong>Ruc: </strong>1793110533001<br>
-  <!-- <strong>Correo de confirmación: </strong>eus3pre@gfeval.com<br> -->
-  <strong>Correo: </strong>eus3pre@gfeval.com<br>
+  <!-- <strong>Correo de confirmación: </strong>info@semilladigital.com<br> -->
+  <strong>Correo: </strong>info@semilladigital.com<br>
 </div>
 <div class="mnsj">
   <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>

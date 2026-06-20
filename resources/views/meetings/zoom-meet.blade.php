@@ -1,4 +1,4 @@
-<x-zoom-layout>
+<x-app-layout>
   <!-- added on import -->
   <div id="zmmtg-root"></div>
   <div id="aria-notify-area"></div>
@@ -151,4 +151,4 @@
 
 
   @endpush
-</x-zoom-layout>
+</x-app-layout>

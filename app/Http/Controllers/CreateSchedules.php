@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subject;
-use Illuminate\Support\Facades\Gate;
+use App\Models\CourseSession;
 use Illuminate\Http\Request;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 use App\Utils\Horarios;
 
@@ -73,8 +72,9 @@ class CreateSchedules extends Controller
     public function insertSessionsRepetitions($session_data, $weeks_repeat, Carbon $start_date, $student_group_id) {
         
         $start_date_cpy = $start_date->copy();
+        $rows = [];
         for ($i = 0; $i < $weeks_repeat; $i++) {
-            DB::table('course_sessions')->insert([
+            $rows[] = [
                 'course_id' =>          $student_group_id,
                 'date' =>               $this->getNextWeekDayByOffset($start_date_cpy, $i),
                 'time' =>               $session_data['session_time'] . ':00',
@@ -82,8 +82,9 @@ class CreateSchedules extends Controller
                 'module_number' =>      0,
                 'subject_id' =>         $session_data['subject_id'],
                 'student_groups_id' =>  $student_group_id,
-            ]);
+            ];
         }
+        CourseSession::insert($rows);
     }
 
     // week repeats es el numero de veces que quieren que se repita la sesion

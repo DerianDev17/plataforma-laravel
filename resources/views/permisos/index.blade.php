@@ -1,4 +1,4 @@
-<x-landing.layout>
+<x-app-layout>
     <a href="roles/create" class="btn btn-success">Crear Nuevo Rol</a>
     <a href="abilities/create" class="btn btn-success">Crear Nueva Habilidad</a>
     <div class="row">
@@ -24,4 +24,4 @@
         </div>
     </div>
     <a href="roles-permisos/create" class="btn btn-success">Asignar nueva habilidad</a>
-    </x-landing-layout>
+    </x-app-layout>

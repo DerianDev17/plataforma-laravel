@@ -16,7 +16,7 @@ class Horarios
 
     public function subj_name($code)
     {
-        return $this->subjects->firstWhere('code', $code)->name ?? 'no data';
+        return $this->subjects->firstWhere('code', $code)->name ?? $code;
     }
 
     public function get_horario($paralelo)

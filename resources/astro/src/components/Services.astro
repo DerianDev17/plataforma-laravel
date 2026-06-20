@@ -1,0 +1,46 @@
+---
+const services = [
+  {
+    title: 'Horarios a tu eleccion',
+    image: '/storage/img/feature1.jpeg',
+  },
+  {
+    title: 'Clases magistrales como en la U',
+    image: '/storage/img/feature2.jpeg',
+  },
+  {
+    title: 'Modalidad presencial y online',
+    image: '/storage/img/feature3.jpg',
+  },
+  {
+    title: 'Acompanamiento antes, durante y despues del examen',
+    image: '/storage/img/feature4.png',
+  },
+];
+---
+
+<section id="servicios" class="bg-zinc-100">
+  <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div>
+        <p class="text-sm font-bold uppercase tracking-[0.24em] text-orange-700">Servicios</p>
+        <h2 class="mt-3 text-3xl font-black tracking-tight text-zinc-950 sm:text-4xl">Un programa pensado para avanzar con claridad</h2>
+      </div>
+      <a class="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-bold text-zinc-900 transition hover:border-orange-600 hover:text-orange-700" href="#contacto">
+        Contactar asesoria
+      </a>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {services.map((service) => (
+        <article class="group relative min-h-80 overflow-hidden rounded-lg bg-zinc-900 shadow-sm">
+          <img class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" src={service.image} alt={service.title} loading="lazy" />
+          <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/18 to-transparent"></div>
+          <div class="absolute inset-x-0 bottom-0 p-5">
+            <h3 class="text-xl font-black uppercase leading-tight text-white">{service.title}</h3>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

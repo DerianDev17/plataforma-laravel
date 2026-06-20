@@ -1,43 +1,35 @@
 <!DOCTYPE html>
-
-<html>
-
+<html lang="es">
 <head>
-
-    <title>ItsolutionStuff.com</title>
-
+    <meta charset="utf-8">
+    <title>Semilla Digital</title>
 </head>
-
 <body>
-
     <h1>{{ $details['title'] }}</h1>
 
-    <!-- <p>{{ $details['body'] }}</p> -->
+    <img
+        src="{{ URL::to('/brand/semilla-logo-horizontal.svg') }}"
+        alt="Semilla Digital"
+        style="width:50%; max-width:320px;"
+    >
 
-    <img src="{{ URL::to('/').Storage::url('img/header_mail.jpeg') }}" alt="Paris" style="width:50%">
-
-
-    <p>Reciba un cordial saludo de parte del equipo de Eus3.</p>
+    <p>Reciba un cordial saludo de parte del equipo de Semilla Digital.</p>
     <p>
-        Le informamos que se le ha generado un nombre de usuario y una contraseña para que pueda acceder
-        a la página web, deberá acceder con los siguientes datos:
+        Le informamos que se le ha generado un nombre de usuario y una contrase&ntilde;a para que pueda acceder
+        a la p&aacute;gina web. Deber&aacute; acceder con los siguientes datos:
     </p>
 
     <p>
-        <strong>Nombre de usuario:</strong> {{$details['user']->username}} <br>
-        <strong>Contraseña:</strong> {{$details['user']->username}} <br>
+        <strong>Nombre de usuario:</strong> {{ $details['user']->username }} <br>
+        <strong>Contrase&ntilde;a:</strong> {{ $details['user']->username }} <br>
     </p>
 
     <p>
-       Le solicitamos que al momento de ingresar cambie su contraseña a una mas segura, este cambio lo puede hacer
-       desde la sección del perfil de usario.
+        Le solicitamos que al momento de ingresar cambie su contrase&ntilde;a a una m&aacute;s segura. Este cambio lo puede hacer
+        desde la secci&oacute;n del perfil de usuario.
     </p>
 
-    <p>Que tenga un excelente día.</p>
-
-
-    <p>Att: Eus3</p>
-
+    <p>Que tenga un excelente d&iacute;a.</p>
+    <p>Atentamente: Semilla Digital</p>
 </body>
-
 </html>

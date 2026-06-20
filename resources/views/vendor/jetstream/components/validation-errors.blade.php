@@ -1,8 +1,8 @@
 @if ($errors->any())
     <div {{ $attributes }}>
-        <div class="font-medium text-red-600">{{ __('Por favor, asegúrese de llenar correctamente la forma.') }}</div>
+        <div class="validation-errors-title">Por favor, aseg&uacute;rese de llenar correctamente el formulario.</div>
 
-        <ul class="mt-3 list-disc list-inside text-sm text-red-600">
+        <ul class="validation-errors-list">
             @foreach ($errors->all() as $error)
                 <li>{{ $error }}</li>
             @endforeach

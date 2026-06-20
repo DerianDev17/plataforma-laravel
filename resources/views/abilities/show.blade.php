@@ -1,4 +1,4 @@
-<x-landing.layout>
+<x-app-layout>
     <div class="container">
         <div class="row">
             <div class="form-group">
@@ -11,4 +11,4 @@
             </div>
         </div>
     </div>
-    </x-landing-layout>
+    </x-app-layout>

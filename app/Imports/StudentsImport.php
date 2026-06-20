@@ -23,7 +23,7 @@ class StudentsImport implements ToCollection, WithStartRow
 
             // revisar si el usuario existe
             if ($user !== null) {
-                $user->status = $row[15];
+                $user->status = true;
                 $user->payment_day = $row[14];
                 $user->fecha_examen = trim($row[13]);
                 $user->exam_month = trim($row[13]);

@@ -1,0 +1,36 @@
+---
+import LandingLayout from '../layouts/LandingLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Services from '../components/Services.astro';
+import Contact from '../components/Contact.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<LandingLayout>
+  <Navbar />
+  <main>
+    <Hero />
+    <About />
+    <Services />
+    <Contact />
+  </main>
+  <Footer />
+  <script is:inline>
+    window.addEventListener('load', function () {
+      var vsid = 'kc22227ac5ae748';
+      if (!vsid || document.querySelector('script[data-leadchatbot]')) {
+        return;
+      }
+
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.async = true;
+      script.defer = true;
+      script.dataset.leadchatbot = 'true';
+      script.src = (document.location.protocol === 'https:' ? 'https://' : 'http://') + 'www.leadchatbot.com/vsa/chat.js';
+      document.head.appendChild(script);
+    });
+  </script>
+</LandingLayout>

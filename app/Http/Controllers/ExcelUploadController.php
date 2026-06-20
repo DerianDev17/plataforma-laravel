@@ -39,7 +39,7 @@ class ExcelUploadController extends Controller
             }
         } catch(Exception $e)
         {
-            dd($e);
+            report($e);
             return back()
             ->with('success', 'Ocurrió un error. Por favor, intente mas tarde.');
         }

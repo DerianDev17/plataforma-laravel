@@ -1,1 +1,1 @@
-<img class="w-15 h-15" src="{{ Storage::url('img/eus-logo.png') }}"/>
+<x-brand.logo {{ $attributes->merge(['class' => 'brand-logo-application']) }} />

@@ -9,10 +9,8 @@ class StatusController extends Controller
 {
     public function store(Request $request)
     {
-     $st = User::all();
-      foreach ($st as $s) {
-        $s->status = false;
-        $s->save();  
-      }
+        User::query()->update(['status' => true]);
+
+        return back()->with('message', 'Cuentas desbloqueadas.');
     }
 }

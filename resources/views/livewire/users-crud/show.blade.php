@@ -1,14 +1,6 @@
 <div>
 
-    @if (session()->has('message'))
-    <div class="bg-teal-100 border-t-4 border-teal-500 rounded-b text-teal-900 px-4 py-3 shadow-md my-3" role="alert">
-        <div class="flex">
-            <div>
-                <p class="text-sm">{{ session('message') }}</p>
-            </div>
-        </div>
-    </div>
-    @endif
+    <x-ui.alert type="info" />
     @if($isOpen)
     @include('livewire.create')
     @endif
@@ -51,7 +43,7 @@
                         <button wire:click="edit({{ $student->id }})" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded">Editar</button>
                         <!-- <button onclick="borrarUser({{{ $student->id }}})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Borrar</button> -->
                         <button wire:click="$emit('triggerDelete',{{ $student->id }})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">Eliminar</button>
-                        <button wire:click="resetPassword({{ $student->id }})" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-1 px-2 rounded">Reset pass.</button>
+                        <button wire:click="resetPassword({{ $student->id }})" class="bg-orange-700 hover:bg-orange-800 text-white font-bold py-1 px-2 rounded">Reset pass.</button>
                     </td>
                 </tr>
                 @endif
@@ -66,8 +58,7 @@
 
 @push('javascripts')
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function() {
