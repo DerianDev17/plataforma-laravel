@@ -23,10 +23,19 @@ class StudentsImport implements ToCollection, WithStartRow
 
             // revisar si el usuario existe
             if ($user !== null) {
-                $user->status = true;
+                $paymentStatus = User::normalizePaymentStatus($row[15] ?? null, 'paid');
+
+                $user->status = User::paymentStatusAllowsAccess($paymentStatus);
+                $user->payment_status = $paymentStatus;
                 $user->payment_day = $row[14];
                 $user->fecha_examen = trim($row[13]);
                 $user->exam_month = trim($row[13]);
+
+                if (! $user->status) {
+                    $user->id_zoom = null;
+                    $user->join_url = null;
+                }
+
                 $user->save();
             } else {
                 array_push($this->failed_updates, $row[7] . ' - ' . $row[15]);

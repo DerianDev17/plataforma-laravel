@@ -69,6 +69,7 @@ class AccountsImport implements ToCollection, WithStartRow
             $user->exam_month =                $row[13]; // necesario
             $user->payment_day =               $row[14];
             $user->status =                    true;
+            $user->payment_status =            'paid';
             $user->email_verified_at =         now();
             $user->remember_token =            Str::random(10);
 

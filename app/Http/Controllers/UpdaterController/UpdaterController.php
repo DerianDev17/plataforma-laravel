@@ -5,6 +5,7 @@ namespace App\Http\Controllers\UpdaterController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Imports\StudentsImport;
+use App\Services\LiveClass\StudentLiveClassAccessService;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -42,6 +43,7 @@ class UpdaterController extends Controller
         //importar
         $import = new StudentsImport;
         Excel::import($import, $archivo_excel);
+        app(StudentLiveClassAccessService::class)->clearCountersCache();
 
         $message = 'Base de datos actualizada<br>';
         $message .= 'Total registros: ' . strval($import->getRowCount()) . '<br><br>';

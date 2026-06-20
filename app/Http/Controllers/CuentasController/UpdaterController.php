@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Imports\StudentsImport;
 use App\Imports\StudentsImportar;
+use App\Services\LiveClass\StudentLiveClassAccessService;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -46,6 +47,7 @@ class UpdaterController extends Controller
         //importar
         $import = new StudentsImportar($debe_borrar);
         Excel::import($import, $archivo_excel);
+        app(StudentLiveClassAccessService::class)->clearCountersCache();
         $message = 'Base de datos actualizada<br>';
         $message .= 'Total registros creados: ' . strval($import->getRowCount()) . '<br><br>';
         $message .= '<strong>Las siguientes direcciones de email son inválidas:</strong><br>';

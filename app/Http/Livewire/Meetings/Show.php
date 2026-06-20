@@ -131,7 +131,7 @@ class Show extends Component
         $this->studentGroupCode = $user->student_group->code ?? null;
         $this->currentScheduleDay = (int) Carbon::now()->dayOfWeekIso;
 
-        $this->zoom_link = $this->get_zoom_link_estudiante($user);
+        $this->zoom_link = $user->canAccessLiveClasses() ? $this->get_zoom_link_estudiante($user) : '';
 
         $this->horario = $this->get_horario_estudiante($user);
 

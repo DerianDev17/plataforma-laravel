@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Http\Livewire\Students\Show as StudentsShow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class UserCrudTest extends TestCase
@@ -124,5 +126,39 @@ class UserCrudTest extends TestCase
         $studentIds = $students->pluck('id');
         $this->assertTrue($studentIds->contains($student->id));
         $this->assertFalse($studentIds->contains($nonStudent->id));
+    }
+
+    /** @test */
+    public function admin_can_update_student_payment_status_individually()
+    {
+        $studentRole = Role::where('name', 'student')->first();
+
+        $student = User::factory()->create([
+            'payment_status' => 'paid',
+            'status' => 1,
+            'join_url' => 'https://classes.test/current',
+            'id_zoom' => 'registrant-1',
+        ]);
+        $student->roles()->attach($studentRole->id);
+
+        Livewire::actingAs($this->admin)
+            ->test(StudentsShow::class)
+            ->call('updatePaymentStatus', $student->id, 'overdue')
+            ->assertHasNoErrors();
+
+        $student = $student->fresh();
+        $this->assertSame('overdue', $student->payment_status);
+        $this->assertEquals(0, $student->status);
+        $this->assertNull($student->join_url);
+        $this->assertNull($student->id_zoom);
+
+        Livewire::actingAs($this->admin)
+            ->test(StudentsShow::class)
+            ->call('updatePaymentStatus', $student->id, 'paid')
+            ->assertHasNoErrors();
+
+        $student = $student->fresh();
+        $this->assertSame('paid', $student->payment_status);
+        $this->assertEquals(1, $student->status);
     }
 }

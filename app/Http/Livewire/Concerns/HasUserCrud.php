@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Concerns;
 
 use App\Exports\StudentsExport;
 use App\Models\User;
+use App\Services\LiveClass\StudentLiveClassAccessService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
@@ -24,6 +25,7 @@ trait HasUserCrud
         $email,
         $password,
         $status,
+        $payment_status,
         $name_representante,
         $last_name_representante,
         $cellphone_representante,
@@ -81,7 +83,8 @@ trait HasUserCrud
 
                     $query->where('payment_status', $this->searchTerm2);
                 })
-                ->paginate(15)
+                ->paginate(15),
+            'paymentStatusOptions' => User::paymentStatusOptions(),
         ]);
     }
 
@@ -118,6 +121,7 @@ trait HasUserCrud
         $this->city = '';
         $this->student_id = '';
         $this->status = '';
+        $this->payment_status = 'pending';
         $this->name_representante = '';
         $this->last_name_representante = '';
         $this->cellphone_representante = '';
@@ -144,13 +148,15 @@ trait HasUserCrud
             'email' => $email_validation,
             'highschool' => 'required',
             'city' => 'required',
-            'status' => 'required',
+            'payment_status' => 'required|in:' . implode(',', array_keys(User::paymentStatusOptions())),
             'name_representante' => 'required',
             'last_name_representante' => 'required',
             'cellphone_representante' => 'required',
             'regimen' => 'required',
             'exam_month' => 'required',
         ]);
+
+        $paymentStatus = User::normalizePaymentStatus($this->payment_status);
 
         $user = User::updateOrCreate(['id' => $this->student_id], [
             'name' => $this->name,
@@ -164,7 +170,8 @@ trait HasUserCrud
             'especialty' => $this->especialty,
             'paralelo' => $this->paralelo,
             'city' => $this->city,
-            'status' => $this->status,
+            'status' => User::paymentStatusAllowsAccess($paymentStatus),
+            'payment_status' => $paymentStatus,
             'name_representante' => $this->name_representante,
             'last_name_representante' => $this->last_name_representante,
             'cellphone_representante' => $this->cellphone_representante,
@@ -173,6 +180,7 @@ trait HasUserCrud
         ]);
 
         $user->assignRole($this->role);
+        $this->clearLiveClassCounters();
 
         session()->flash('message', 'Estudiante Actualizado Correctamente.');
 
@@ -198,6 +206,7 @@ trait HasUserCrud
         $this->paralelo = $student->paralelo;
         $this->city = $student->city;
         $this->status = $student->status;
+        $this->payment_status = $student->effective_payment_status;
         $this->name_representante = $student->name_representante;
         $this->last_name_representante = $student->last_name_representante;
         $this->cellphone_representante = $student->cellphone_representante;
@@ -231,6 +240,38 @@ trait HasUserCrud
         return \Maatwebsite\Excel\Facades\Excel::download(new StudentsExport, 'estudiantes' . $current . '.xlsx');
     }
 
+    public function updatePaymentStatus($id, $paymentStatus)
+    {
+        $this->authorizeAbility('edit_users');
+
+        $paymentStatus = User::normalizePaymentStatus($paymentStatus, null);
+
+        if (! array_key_exists($paymentStatus, User::paymentStatusOptions())) {
+            $this->addError('payment_status', 'Estado de pago invalido.');
+            return;
+        }
+
+        $student = User::students()->findOrFail($id);
+
+        $student->payment_status = $paymentStatus;
+        $student->status = User::paymentStatusAllowsAccess($paymentStatus);
+
+        if (! $student->status) {
+            $student->id_zoom = null;
+            $student->join_url = null;
+        }
+
+        $student->save();
+
+        $this->clearLiveClassCounters();
+
+        if (method_exists($this, 'update_counters')) {
+            $this->update_counters();
+        }
+
+        session()->flash('message', 'Estado de pago actualizado para ' . trim($student->name . ' ' . $student->last_name) . '.');
+    }
+
     public function resetPassword($id)
     {
         $this->authorizeAbility('edit_users');
@@ -238,5 +279,10 @@ trait HasUserCrud
         $student->password = Hash::make($student->username);
         $student->save();
         session()->flash('message', 'Contraseña restablecida.');
+    }
+
+    private function clearLiveClassCounters()
+    {
+        app(StudentLiveClassAccessService::class)->clearCountersCache();
     }
 }

@@ -32,11 +32,13 @@
                         @error('password') <span class="text-red-500">{{ $message }}</span>@enderror
                     </div>
                     <div class="mb-4">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Pagado:<span class="text-red-700">*</span></label>
-                        <select style="background-color: white;" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" wire:model="status">
-                            <option value="1">1</option>
-                            <option value="0">0</option>
+                        <label for="payment_status" class="block text-gray-700 text-sm font-bold mb-2">Estado de pago:<span class="text-red-700">*</span></label>
+                        <select style="background-color: white;" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="payment_status" wire:model="payment_status">
+                            @foreach($paymentStatusOptions ?? \App\Models\User::paymentStatusOptions() as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
                         </select>
+                        @error('payment_status') <span class="text-red-500">{{ $message }}</span>@enderror
                     </div>
                     <div class="mb-4">
                         <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Cédula:</label>

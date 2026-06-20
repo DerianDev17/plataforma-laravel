@@ -55,6 +55,9 @@
                             </div>
 
                             <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                                <a href="{{ route('dashboard-students') }}" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 mr-2">
+                                    Editar pago individual
+                                </a>
                                 <x-jet-button>
                                     Subir excel
                                 </x-jet-button>

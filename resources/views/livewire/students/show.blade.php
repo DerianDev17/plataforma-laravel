@@ -99,6 +99,7 @@
                     @forelse($studentsForTable as $student)
                         @php
                             $isPaid = $student->canAccessLiveClasses();
+                            $currentPaymentStatus = $student->effective_payment_status;
                             $hasGroup = ! in_array((int) $student->student_group_id, [3, 999], true);
                         @endphp
                         <tr>
@@ -114,6 +115,19 @@
                                 @else
                                     <span class="eus-badge eus-badge-red">{{ $student->payment_status_label ?? 'Bloqueado' }}</span>
                                 @endif
+                                <select
+                                    class="eus-select mt-2"
+                                    aria-label="Actualizar estado de pago de {{ $student->name }} {{ $student->last_name }}"
+                                    wire:change="updatePaymentStatus({{ $student->id }}, $event.target.value)"
+                                    wire:loading.attr="disabled"
+                                    wire:target="updatePaymentStatus"
+                                >
+                                    @foreach($paymentStatusOptions as $value => $label)
+                                        <option value="{{ $value }}" {{ $currentPaymentStatus === $value ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </td>
                             <td>
                                 @if($hasGroup)

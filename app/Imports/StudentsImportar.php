@@ -110,14 +110,22 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
     public function actualizarUserData($row, $user)
     {
         $paralelo = trim($row[13]);
+        $paymentStatus = User::normalizePaymentStatus($row[15] ?? null, 'paid');
 
         // $user = User::students()->where('email', $row[7])->first();
 
-        $user->status = true;
+        $user->status = User::paymentStatusAllowsAccess($paymentStatus);
+        $user->payment_status = $paymentStatus;
         $user->exam_month = $row[13];
         $user->diapago = $row[16];
         $user->enviarCorreo = $row[17];
         $user->student_group_id = $this->getStudentGroupbyCode($paralelo)->id;;
+
+        if (! $user->status) {
+            $user->id_zoom = null;
+            $user->join_url = null;
+        }
+
         $user->save();
     }
 
@@ -155,7 +163,9 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
         $user->fecha_examen =              $row[13];
         $user->exam_month =                $row[13]; // necesario
         $user->payment_day =               $row[14];
-        $user->status =                    true;
+        $paymentStatus = User::normalizePaymentStatus($row[15] ?? null, 'paid');
+        $user->status =                    User::paymentStatusAllowsAccess($paymentStatus);
+        $user->payment_status =            $paymentStatus;
         $user->diapago =                   $row[16];
         $user->enviarCorreo =              $row[17];
 
