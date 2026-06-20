@@ -7,13 +7,13 @@ use App\Models\User;
 use App\Services\LiveClass\Contracts\LiveClassProvider;
 use App\Services\LiveClass\LiveClassOperationResult;
 use App\Services\LiveClass\LiveClassSyncResult;
-use App\Traits\ZoomJWT;
+use App\Traits\ZoomOAuthClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Log;
 
 class ZoomLiveClassProvider implements LiveClassProvider
 {
-    use ZoomJWT;
+    use ZoomOAuthClient;
 
     public function label(): string
     {

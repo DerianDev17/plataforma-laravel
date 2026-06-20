@@ -187,6 +187,35 @@ La app fue migrada incrementalmente de Laravel 8 a 11. Cambios estructurales rel
 - **Paquetes removidos**: `fideloper/proxy`, `fruitcake/laravel-cors`, `facade/ignition`, `mediconesystems/livewire-datatables`, `tegimus/php-izitoast`, `doctrine/dbal`
 - **Configs eliminados**: `config/cors.php`, `config/hooks.php`
 
+## Autenticacion Zoom
+
+La integracion con Zoom esta en proceso de migracion de JWT a OAuth Server-to-Server:
+
+| Componente | Autenticacion | Estado |
+|------------|--------------|--------|
+| `ZoomLiveClassProvider` | OAuth (`ZoomOAuthClient`) | Migrado |
+| `MeetingController` | JWT (`ZoomJWT`) | Por migrar |
+| `Meetings/Show` (Livewire) | JWT (`ZoomJWT`) | Por migrar |
+| Generacion de firma Web SDK | JWT (`generate_signature`) | Requiere JWT (client-side) |
+
+El trait `app/Traits/ZoomJWT.php` usa `api_key` + `api_secret` con JWT HS256 (deprecado por Zoom desde Junio 2023). El nuevo trait `app/Traits/ZoomOAuthClient.php` usa Server-to-Server OAuth con `client_id` + `client_secret` + `account_id`, con cache del token por 55 minutos.
+
+### Variables de entorno requeridas
+
+```env
+# Zoom OAuth (nuevo)
+ZOOM_CLIENT_ID=
+ZOOM_CLIENT_SECRET=
+ZOOM_ACCOUNT_ID=
+
+# Zoom JWT (legacy, por migrar)
+ZOOM_API_KEY=
+ZOOM_API_SECRET=
+
+# Comun
+ZOOM_API_URL=https://api.zoom.us/v2/
+```
+
 ## Deploy en Vercel
 
 El proyecto incluye `vercel.json` configurado para usar `api/index.js` como proxy hacia el servidor Laravel. Asegurate de que las variables de entorno de Vercel coincidan con las de `.env.example`.
