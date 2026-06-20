@@ -62,7 +62,7 @@ class MeetingController extends Controller
             'type' => self::MEETING_TYPE_SCHEDULE,
             'start_time' => $this->toZoomTimeFormat($data['start_time']),
             'duration' => 30,
-            'agenda' => $data['agenda'],
+            'agenda' => $data['agenda'] ?? '',
             'settings' => [
                 'host_video' => false,
                 'participant_video' => false,
@@ -115,7 +115,7 @@ class MeetingController extends Controller
             'type' => self::MEETING_TYPE_SCHEDULE,
             'start_time' => (new \DateTime($data['start_time']))->format('Y-m-d\TH:i:s'),
             'duration' => 30,
-            'agenda' => $data['agenda'],
+            'agenda' => $data['agenda'] ?? '',
             'settings' => [
                 'host_video' => false,
                 'participant_video' => false,
@@ -335,9 +335,10 @@ class MeetingController extends Controller
         try {
             $response = $this->zoomGet($path, $params);
 
+            $registrants = $response->json()['registrants'] ?? [];
+
             if (isset($response->json()['next_page_token'])) {
                 $next_page_token = $response->json()['next_page_token'];
-                $registrants = array_merge($registrants, $response->json()['registrants']);
 
                 while ($next_page_token) {
                     $response = $this->zoomGet($path, [
@@ -345,8 +346,8 @@ class MeetingController extends Controller
                         'status' => $status,
                         'next_page_token' => $next_page_token,
                     ]);
-                    $next_page_token = $response->json()['next_page_token'];
-                    $registrants = array_merge($registrants, $response->json()['registrants']);
+                    $next_page_token = $response->json()['next_page_token'] ?? null;
+                    $registrants = array_merge($registrants, $response->json()['registrants'] ?? []);
                 }
             }
         } catch (\Throwable $th) {

@@ -48,17 +48,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::view('contacts', 'users.contacts');
 
     Route::middleware('can:crud_drives')->group(function () {
-        Route::view('student', 'pages.students')->name('dashboard-students');
-        Route::view('course-resources', 'pages.students')->name('course-resources');
         Route::view('/admin/drives', 'pages.drives')->name('drives');
     });
 
     Route::middleware('can:edit_users')->group(function () {
+        Route::view('student', 'pages.students')->name('dashboard-students');
+        Route::view('course-resources', 'pages.students')->name('course-resources');
         Route::view('/admin/users', 'pages.users')->name('users-crud');
         Route::view('/companies', 'pages.companies')->name('companies');
         Route::view('/admin/asistencias', 'pages.asistencias')->name('asistencias-crud');
         Route::view('/admin/sesiones', 'pages.sesiones')->name('sesiones-crud');
-        Route::view('/admin/zoom-configuration', 'pages.zoom-configuration')->name('zoom-configuration');
+        Route::view('/admin/live-class-provider', 'pages.live-class-provider')->name('live-class-provider');
+        Route::redirect('/admin/zoom-configuration', '/admin/live-class-provider')->name('zoom-configuration');
 
         // User-rol assignment
         Route::get('users-roles', [\App\Http\Controllers\AsignacionController::class, 'index'])->name('asignacion.index');

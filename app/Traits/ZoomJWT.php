@@ -8,8 +8,8 @@ trait ZoomJWT
 {
     private function generateZoomToken()
     {
-        $key = env('ZOOM_API_KEY', '');
-        $secret = env('ZOOM_API_SECRET', '');
+        $key = config('services.zoom.api_key', env('ZOOM_API_KEY', ''));
+        $secret = config('services.zoom.api_secret', env('ZOOM_API_SECRET', ''));
         $payload = [
             'iss' => $key,
             'exp' => time() + 36000,
@@ -19,7 +19,7 @@ trait ZoomJWT
 
     private function retrieveZoomUrl()
     {
-        return env('ZOOM_API_URL', '');
+        return config('services.zoom.api_url', env('ZOOM_API_URL', ''));
     }
 
     private function zoomRequest()
@@ -92,8 +92,8 @@ trait ZoomJWT
 
     function generate_signature($meeting_number, $role)
     {
-        $api_key = env('ZOOM_API_KEY', '');
-        $api_secret = env('ZOOM_API_SECRET', '');
+        $api_key = config('services.zoom.api_key', env('ZOOM_API_KEY', ''));
+        $api_secret = config('services.zoom.api_secret', env('ZOOM_API_SECRET', ''));
 
         //Set the timezone to UTC
         date_default_timezone_set("UTC");

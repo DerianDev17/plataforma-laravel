@@ -85,8 +85,7 @@ $user = Auth::user();
 
     <div class="ml-12">
       <div class="mt-2 text-sm text-gray-500">
-        Accede a las clases en vivo, reuniones por medio de Zoom que nos permitiran guiarte en tus estudios, en esta
-        nueva modalidad virtual.
+        Accede a las clases en vivo y sesiones virtuales que nos permitiran guiarte en tus estudios.
       </div>
       <a href="{{ route('dashboard-meetings') }}">
         <div class="mt-3 flex items-center text-sm font-semibold text-indigo-700">

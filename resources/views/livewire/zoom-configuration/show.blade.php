@@ -6,7 +6,7 @@
         <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-span-1">
                 <div class="px-4 sm:px-0">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900">Zoom Links</h3>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Enlaces de acceso</h3>
                     <p class="mt-1 text-sm text-gray-600">
                     </p>
                 </div>
@@ -18,7 +18,7 @@
                         <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
                             <div class="grid grid-cols-2 gap-6">
                                 <div class="col-span-3 sm:col-span-2">
-                                    <label for="email_address" class="block text-sm font-medium text-gray-700">Link Febrero</label>
+                                    <label for="email_address" class="block text-sm font-medium text-gray-700">Enlace Febrero</label>
                                     <x-jet-input wire:model="zoom_febrero" type="text" name="zoom_febrero" id="zoom_febrero" autocomplete="email" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                                     @error('zoom_febrero') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                 </div>
@@ -28,7 +28,7 @@
                         <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
                             <div class="grid grid-cols-2 gap-6">
                                 <div class="col-span-3 sm:col-span-2">
-                                    <label for="email_address" class="block text-sm font-medium text-gray-700">Link Junio</label>
+                                    <label for="email_address" class="block text-sm font-medium text-gray-700">Enlace Junio</label>
                                     <x-jet-input wire:model="zoom_junio" type="text" name="zoom_junio" id="zoom_junio" autocomplete="email" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                                     @error('zoom_junio') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                 </div>
@@ -38,7 +38,7 @@
                         <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
                             <div class="grid grid-cols-2 gap-6">
                                 <div class="col-span-3 sm:col-span-2">
-                                    <label for="email_address" class="block text-sm font-medium text-gray-700">Link Julio</label>
+                                    <label for="email_address" class="block text-sm font-medium text-gray-700">Enlace Julio</label>
                                     <x-jet-input wire:model="zoom_julio" type="text" name="zoom_julio" id="zoom_julio" autocomplete="email" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" />
                                     @error('zoom_julio') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                 </div>

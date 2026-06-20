@@ -33,7 +33,7 @@
 
     $actions = [
         ['route' => 'informacion', 'icon' => 'monitor', 'label' => 'Panel informativo'],
-        ['route' => 'dashboard-meetings', 'icon' => 'monitor', 'label' => 'Reuniones Zoom'],
+        ['route' => 'dashboard-meetings', 'icon' => 'monitor', 'label' => 'Clases en vivo'],
         ['route' => 'recursos', 'icon' => 'video', 'label' => 'Clases grabadas'],
         ['route' => 'material_digital', 'icon' => 'book', 'label' => 'Material digital'],
     ];

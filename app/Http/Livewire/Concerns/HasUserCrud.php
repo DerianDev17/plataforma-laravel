@@ -41,6 +41,16 @@ trait HasUserCrud
         $this->resetPage();
     }
 
+    public function updatingSearchTerm()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSearchTerm2()
+    {
+        $this->resetPage();
+    }
+
     public function baseRender($view)
     {
         $this->authorizeAbility('edit_users');
@@ -49,10 +59,28 @@ trait HasUserCrud
         $searchTerm2 = '%' . $this->searchTerm2 . '%';
 
         return view($view, [
-            'studentsForTable' => User::orderBy('id', 'desc')
-                ->with('roles')
-                ->where('email', 'like', $searchTerm)
-                ->where('status', 'like', $searchTerm2)
+            'studentsForTable' => User::students()
+                ->orderBy('id', 'desc')
+                ->with(['roles', 'student_group'])
+                ->where(function ($query) use ($searchTerm): void {
+                    $query->where('email', 'like', $searchTerm)
+                        ->orWhere('name', 'like', $searchTerm)
+                        ->orWhere('last_name', 'like', $searchTerm)
+                        ->orWhere('username', 'like', $searchTerm);
+                })
+                ->when($this->searchTerm2, function ($query): void {
+                    if ($this->searchTerm2 === 'access') {
+                        $query->withLiveClassPaymentAccess();
+                        return;
+                    }
+
+                    if ($this->searchTerm2 === 'blocked') {
+                        $query->where('payment_status', 'overdue');
+                        return;
+                    }
+
+                    $query->where('payment_status', $this->searchTerm2);
+                })
                 ->paginate(15)
         ]);
     }

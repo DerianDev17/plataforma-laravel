@@ -31,7 +31,13 @@ class Show extends Component
 
     public function check_payment($student)
     {
-        return true;
+        if ($student instanceof User) {
+            return $student->canAccessLiveClasses();
+        }
+
+        $user = User::find($student);
+
+        return $user && $user->canAccessLiveClasses();
     }
 
     public $today_sessions;
@@ -260,21 +266,26 @@ class Show extends Component
                 return;
             }
 
-            // dd($std_grp_id);
-            // $course_id = $this->getCourseid($user);
+            if (!$this->check_payment($user->id)) {
+                $this->show_alert = true;
+                session()->flash(
+                    'error',
+                    'No puede registrar asistencia. Su estado de pago es: ' . ($user->payment_status_label ?? $user->payment_status) . '.'
+                );
+                return;
+            }
+
             $date = Carbon::today()->toDateString();
 
-            // obtener la sesion de la bdd
-            $clase = CourseSession::where('date', $date)
+            $query = CourseSession::where('date', $date)
                 ->where('time', $hora_clase . ':00')
-                ->where('student_groups_id', $std_grp_id)
-                ->first();
+                ->where('student_groups_id', $std_grp_id);
 
-            // $clase = CourseSession::where('subject', $materia)
-            //     ->where('date', $date)
-            //     ->where('time', $hora_clase . ':00')
-            //     ->where('course_id', $course_id)
-            //     ->first();
+            if (!empty($materia)) {
+                $query->where('subject', $materia);
+            }
+
+            $clase = $query->first();
 
             if (!$clase) {
                 $this->show_alert = true;

@@ -30,4 +30,14 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'live_classes' => [
+        'provider' => env('LIVE_CLASS_PROVIDER', 'zoom'),
+    ],
+
+    'zoom' => [
+        'api_key' => env('ZOOM_API_KEY', ''),
+        'api_secret' => env('ZOOM_API_SECRET', ''),
+        'api_url' => env('ZOOM_API_URL', ''),
+    ],
+
 ];

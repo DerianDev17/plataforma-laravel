@@ -24,6 +24,8 @@ class User extends Authenticatable implements MustVerifyEmail
     use TwoFactorAuthenticatable;
     use SoftDeletes;
 
+    public const LIVE_CLASS_PAYMENT_STATUSES = ['paid', 'pending', 'scholarship'];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -56,7 +58,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'emailPadre',
         'emailMadre',
         'telefonoPadre',
-        'telefonoMadre'
+        'telefonoMadre',
+        'payment_status',
     ];
 
     /**
@@ -195,7 +198,28 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function adeuda()
     {
-        return false;
+        return $this->payment_status === 'overdue';
+    }
+
+    public function canAccessLiveClasses()
+    {
+        if (array_key_exists('payment_status', $this->attributes) && $this->payment_status !== null) {
+            return in_array($this->payment_status, self::LIVE_CLASS_PAYMENT_STATUSES, true);
+        }
+
+        return (int) $this->status === 1;
+    }
+
+    public function getPaymentStatusLabelAttribute()
+    {
+        $labels = [
+            'paid' => 'Pagado',
+            'pending' => 'Pendiente',
+            'overdue' => 'Vencido',
+            'scholarship' => 'Becado',
+        ];
+
+        return $labels[$this->payment_status] ?? $this->payment_status;
     }
 
     public function diapago()
@@ -278,6 +302,17 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $query->whereHas('roles', function ($q) {
             $q->where('role_id', 2);
+        });
+    }
+
+    public function scopeWithLiveClassPaymentAccess($query)
+    {
+        return $query->where(function ($query) {
+            $query->whereIn('payment_status', self::LIVE_CLASS_PAYMENT_STATUSES)
+                ->orWhere(function ($query) {
+                    $query->whereNull('payment_status')
+                        ->where('status', 1);
+                });
         });
     }
 

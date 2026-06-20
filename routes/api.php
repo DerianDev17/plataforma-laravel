@@ -38,7 +38,9 @@ Route::middleware(['auth:sanctum', 'can:edit_users'])->group(function () {
 
 });
 
-Route::get('/hora', function (Request $request) {
-    return Carbon::now()->isoFormat('LLLL:ss');
-});
+if (App::environment('local')) {
+    Route::get('/hora', function (Request $request) {
+        return Carbon::now()->isoFormat('LLLL:ss');
+    });
+}
 

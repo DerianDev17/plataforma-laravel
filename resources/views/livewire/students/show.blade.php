@@ -1,99 +1,177 @@
-<div>
+@php
+    $stats = [
+        ['variant' => 'info', 'icon' => 'users', 'value' => number_format($total_students_n), 'label' => 'Estudiantes'],
+        ['variant' => 'success', 'icon' => 'check', 'value' => number_format($active_students_n), 'label' => 'Habilitados'],
+        ['variant' => 'orange', 'icon' => 'bell', 'value' => number_format($blocked_students_n), 'label' => 'Vencidos'],
+        ['variant' => 'purple', 'icon' => 'users', 'value' => number_format($students_without_group_n), 'label' => 'Sin paralelo'],
+    ];
+@endphp
 
-    <x-ui.alert type="info" />
-    @if($isOpen)
-    @include('livewire.create')
+<div class="dashboard-stack">
+    <x-ui.alert />
+
+    @if(session()->has('error'))
+        <div class="eus-alert eus-alert-danger" role="alert">
+            <span>{{ session('error') }}</span>
+            <button type="button" class="eus-btn eus-btn-ghost eus-btn-sm" onclick="this.parentElement.remove()" aria-label="Cerrar alerta">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
     @endif
 
-    <div class="shadow p-4 bg-white mb-1">
-        <div class="text-left">
-            <h3 class="mb-2 text-gray-700">Registro Zoom</h3>
-            <p><strong>Usuarios con enlace a la sesión: </strong>{{$registrants_n}}</p>
-            <p><strong>Usuarios al día en pagos: </strong>{{ $canceled_users_n }}</p>
+    @if($isOpen)
+        @include('livewire.create')
+    @endif
+
+    <section class="dashboard-hero meetings-hero" aria-label="Resumen de estudiantes">
+        <div class="dashboard-hero-body">
+            <div>
+                <p class="dashboard-eyebrow">Estudiantes</p>
+                <h2 class="dashboard-title">Directorio y estado academico</h2>
+                <p class="dashboard-copy">
+                    Administra datos, estados de pago, paralelos y credenciales de los estudiantes.
+                </p>
+            </div>
+
+            <div class="dashboard-mark" aria-hidden="true">
+                <x-ui.icon name="users" :size="38" />
+            </div>
         </div>
-        ​
-        <div class="mt-0">
-            <x-jet-button wire:click="registerToWebinar()" wire:loading.remove>Registrar usuarios</x-jet-button>
-            <x-jet-button class="bg-orange-700 hover:bg-orange-800 text-white text-sm" wire:click="update_zoom_links()" wire:loading.remove>Actualizar links</x-jet-button>
-            <x-jet-button wire:loading disabled>Procesando...</x-jet-button>
+    </section>
+
+    <section class="dashboard-grid" aria-label="Indicadores de estudiantes">
+        @foreach($stats as $stat)
+            <x-dashboard.stat-card
+                :variant="$stat['variant']"
+                :icon="$stat['icon']"
+                :value="$stat['value']"
+                :label="$stat['label']"
+            />
+        @endforeach
+    </section>
+
+    <section class="eus-card" aria-label="Directorio de estudiantes">
+        <div class="eus-card-header">
+            <div>
+                <h3 class="eus-card-title">Directorio de estudiantes</h3>
+                <p class="muted-small">Filtra, exporta y gestiona datos individuales.</p>
+            </div>
+            <button wire:click="downloadStudents" class="eus-btn eus-btn-secondary eus-btn-sm">
+                <x-ui.icon name="book" :size="16" />
+                Descargar
+            </button>
         </div>
-    </div>
 
+        <div class="eus-card-body">
+            <div class="attendance-filter-grid">
+                <div>
+                    <label class="eus-label" for="student-search">Buscar estudiante</label>
+                    <input id="student-search" type="text" class="eus-input" placeholder="Nombre, usuario o email" wire:model.debounce.350ms="searchTerm" />
+                </div>
+                <div>
+                    <label class="eus-label" for="student-payment">Estado de pago</label>
+                    <select id="student-payment" class="eus-select" wire:model="searchTerm2">
+                        <option value="">Todos</option>
+                        <option value="access">Habilitados</option>
+                        <option value="paid">Pagado</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="scholarship">Becado</option>
+                        <option value="blocked">Vencido</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-    <x-jet-input type="text" placeholder="Email" wire:model="searchTerm" />
-    <x-jet-input type="text" placeholder="Pagado" wire:model="searchTerm2" />
-    <button wire:click="downloadStudents()" class="bg-grey-light hover:bg-grey text-grey-darkest font-bold py-2 px-4 rounded inline-flex items-center">
-        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-            <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
-        </svg>
-        <span>Descargar</span>
-    </button>
+        <div class="eus-table-wrapper">
+            <table class="eus-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Estudiante</th>
+                        <th>Usuario</th>
+                        <th>Pago</th>
+                        <th>Paralelo</th>
+                        <th>Contacto</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($studentsForTable as $student)
+                        @php
+                            $isPaid = $student->canAccessLiveClasses();
+                            $hasGroup = ! in_array((int) $student->student_group_id, [3, 999], true);
+                        @endphp
+                        <tr>
+                            <td>{{ $student->id }}</td>
+                            <td>
+                                <div class="font-strong">{{ $student->name }} {{ $student->last_name }}</div>
+                                <div class="muted-small">{{ $student->email }}</div>
+                            </td>
+                            <td>{{ $student->username }}</td>
+                            <td>
+                                @if($isPaid)
+                                    <span class="eus-badge eus-badge-green">{{ $student->payment_status_label ?? 'Al dia' }}</span>
+                                @else
+                                    <span class="eus-badge eus-badge-red">{{ $student->payment_status_label ?? 'Bloqueado' }}</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($hasGroup)
+                                    <span class="eus-badge eus-badge-gray">{{ optional($student->student_group)->name ?? 'Paralelo asignado' }}</span>
+                                @else
+                                    <span class="eus-badge eus-badge-red">Sin paralelo</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div>{{ $student->cellphone }}</div>
+                                <div class="muted-small">{{ $student->city }}</div>
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <button type="button" wire:click="edit({{ $student->id }})" class="eus-btn eus-btn-secondary eus-btn-sm">Editar</button>
+                                    <button type="button" wire:click="resetPassword({{ $student->id }})" class="eus-btn eus-btn-secondary eus-btn-sm">Reset pass.</button>
+                                    <button type="button" wire:click="$emit('triggerDelete',{{ $student->id }})" class="eus-btn eus-btn-danger eus-btn-sm">Eliminar</button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7">
+                                <div class="eus-empty empty-compact">
+                                    <div class="eus-empty-title">Sin estudiantes</div>
+                                    <div class="eus-empty-text">Ajusta los filtros o carga estudiantes en la base.</div>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
-    <div class="" style="overflow-x:auto;">
-        <table class="w-full">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="px-4 py-2 w-20">No.</th>
-                    <th class="px-4 py-2">Nombre</th>
-                    <th class="px-4 py-2">Apellido</th>
-                    <th class="px-4 py-2">Usuario</th>
-                    <th class="px-4 py-2 w-10">Pagado</th>
-                    <th class="px-4 py-2">Celular</th>
-                    <th class="px-4 py-2">Email</th>
-                    <th class="px-4 py-2">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($studentsForTable as $student)
-                @if ($student->hasRole('student'))
-                <tr>
-                    <td class="border px-4 py-2">{{ $student->id }}</td>
-                    <td class="border px-4 py-2">{{ $student->name }}</td>
-                    <td class="border px-4 py-2">{{ $student->last_name }}</td>
-                    <td class="border px-4 py-2">{{ $student->username }}</td>
-                    <td class="border px-4 py-2">{{ $student->status }}</td>
-                    <td class="border px-4 py-2">{{ $student->cellphone }}</td>
-                    <td class="border px-4 py-2">{{ $student->email }}</td>
-                    <td class="border px-4 py-2">
-                        <button wire:click="edit({{ $student->id }})" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded">Editar</button>
-                        <!-- <button onclick="borrarUser({{{ $student->id }}})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Borrar</button> -->
-                        <button wire:click="$emit('triggerDelete',{{ $student->id }})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">Eliminar</button>
-                        <button wire:click="resetPassword({{ $student->id }})" class="bg-orange-700 hover:bg-orange-800 text-white font-bold py-1 px-2 rounded">Reset pass.</button>
-                        <button wire:click="registerStudent({{ $student->id }})" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-1 px-2 rounded">Reg. meet.</button>
-                    </td>
-                </tr>
-                @endif
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    {{ $studentsForTable->links('components.ui.pagination',['is_livewire' => true])}}
+        <div class="eus-card-footer">
+            {{ $studentsForTable->links('components.ui.pagination', ['is_livewire' => true]) }}
+        </div>
+    </section>
 </div>
 
-
 @push('javascripts')
-
 <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function() {
-        // console.log(companyId)
         Livewire.on('triggerDelete', studentId => {
             Swal.fire({
-                title: 'Confirmar acción',
-                text: 'El estudiante será eliminado.',
+                title: 'Confirmar accion',
+                text: 'El estudiante sera eliminado.',
                 type: "warning",
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: '¡Borrar!',
+                confirmButtonText: 'Borrar',
                 cancelButtonText: 'Cancelar',
             }).then((result) => {
                 if (result.value) {
                     @this.call('delete', studentId)
-                } else {
-                    console.log("Canceled");
                 }
             });
         })

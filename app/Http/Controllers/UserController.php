@@ -47,9 +47,11 @@ class UserController extends Controller
     {
         $search = $request->search ?? '';
 
-        return User::where('name', 'like', '%'.$search.'%')
-            ->orWhere('last_name', 'like', '%'.$search.'%')
-            ->orWhere('email', 'like', '%'.$search.'%')
+        return User::where(function ($q) use ($search) {
+                $q->where('name', 'like', '%'.$search.'%')
+                  ->orWhere('last_name', 'like', '%'.$search.'%')
+                  ->orWhere('email', 'like', '%'.$search.'%');
+            })
             ->paginate(30)
             ->toJson();
     }
@@ -58,9 +60,11 @@ class UserController extends Controller
     {
         $search = $request->search ?? '';
 
-        return CourseSession::where('subject', 'like', '%'.$search.'%')
-            ->orWhere('date', 'like', '%'.$search.'%')
-            ->orWhere('time', 'like', '%'.$search.'%')
+        return CourseSession::where(function ($q) use ($search) {
+                $q->where('subject', 'like', '%'.$search.'%')
+                  ->orWhere('date', 'like', '%'.$search.'%')
+                  ->orWhere('time', 'like', '%'.$search.'%');
+            })
             ->paginate(30)
             ->toJson();
     }
