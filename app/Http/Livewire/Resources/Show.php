@@ -56,13 +56,6 @@ class Show extends Component
 
     }
 
-    public function getCourseid($user)
-    {
-        $exam_month_pre =  'pre_' . strtolower($user->exam_month);
-        $curso = Course::where('code', $exam_month_pre)->first();
-        return $curso->id;
-    }
-
     public function changeSubject($old_subject)
     {
         switch ($old_subject) {

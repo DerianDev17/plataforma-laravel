@@ -14,8 +14,5 @@ class MeetingDetail extends Model
         'meeting_id',
         'link',
         'course_id',
-        'created_at',
-        'updated_at'
-
     ];
 }

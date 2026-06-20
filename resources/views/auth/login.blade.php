@@ -1,77 +1,48 @@
 <x-guest-layout>
-    <x-auth.shell>
-        <div class="auth-card" role="main" aria-label="Inicio de sesion">
-            <x-auth.visual />
+    <x-authentication-card>
+        <x-slot name="logo">
+            <x-authentication-card-logo />
+        </x-slot>
 
-            <section class="auth-panel" aria-label="Formulario de inicio de sesion">
-                <div class="auth-panel-card">
-                    <x-auth.panel-header
-                        eyebrow="Bienvenido"
-                        title="Iniciar sesion"
-                        copy="Usa las credenciales entregadas por el equipo acad&eacute;mico."
-                        mobile-logo
-                    />
+        <x-validation-errors class="mb-4" />
 
-                    <x-jet-validation-errors class="auth-alert-gap eus-alert eus-alert-danger" role="alert" />
+        @session('status')
+            <div class="mb-4 font-medium text-sm text-green-600">
+                {{ $value }}
+            </div>
+        @endsession
 
-                    @if (session('status'))
-                        <div class="auth-alert-gap eus-alert eus-alert-success" role="status">
-                            {{ session('status') }}
-                        </div>
-                    @endif
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
 
-                    <form method="POST" action="{{ route('login') }}" class="auth-login-form" novalidate aria-describedby="login-help">
-                        @csrf
+            <div>
+                <x-label for="email" value="{{ __('Email') }}" />
+                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+            </div>
 
-                        <div>
-                            <label for="username" class="eus-label">Nombre de usuario</label>
-                            <input
-                                id="username"
-                                class="eus-input"
-                                type="text"
-                                name="username"
-                                value="{{ old('username') }}"
-                                required
-                                autofocus
-                                autocomplete="username"
-                                aria-required="true"
-                            >
-                        </div>
+            <div class="mt-4">
+                <x-label for="password" value="{{ __('Password') }}" />
+                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
+            </div>
 
-                        <div>
-                            <label for="password" class="eus-label">Contrase&ntilde;a</label>
-                            <input
-                                id="password"
-                                class="eus-input"
-                                type="password"
-                                name="password"
-                                required
-                                autocomplete="current-password"
-                                aria-required="true"
-                            >
-                            @if (Route::has('password.request'))
-                                <a class="auth-forgot-link" href="{{ route('password.request') }}">
-                                    &iquest;Olvidaste tu contrase&ntilde;a?
-                                </a>
-                            @endif
-                        </div>
+            <div class="block mt-4">
+                <label for="remember_me" class="flex items-center">
+                    <x-checkbox id="remember_me" name="remember" />
+                    <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+                </label>
+            </div>
 
-                        <label for="remember_me" class="eus-checkbox">
-                            <input id="remember_me" type="checkbox" name="remember">
-                            <span>Recordarme</span>
-                        </label>
+            <div class="flex items-center justify-end mt-4">
+                @if (Route::has('password.request'))
+                    <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
+                        {{ __('Forgot your password?') }}
+                    </a>
+                @endif
 
-                        <button type="submit" class="eus-btn eus-btn-primary eus-btn-lg eus-btn-full">
-                            Ingresar
-                        </button>
-                    </form>
-
-                    <p id="login-help" class="auth-help">
-                        Si tienes inconvenientes para ingresar, escribe a
-                        <a class="auth-help-link" href="mailto:soporte@semilladigital.com">soporte@semilladigital.com</a>.
-                    </p>
-                </div>
-            </section>
-        </div>
-    </x-auth.shell>
+                <x-button class="ms-4">
+                    {{ __('Log in') }}
+                </x-button>
+            </div>
+        </form>
+    </x-authentication-card>
 </x-guest-layout>

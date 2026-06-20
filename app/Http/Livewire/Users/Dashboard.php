@@ -47,7 +47,7 @@ class Dashboard extends Component
         $stats = Cache::remember('dashboard.stats.' . Carbon::today()->toDateString(), now()->addMinutes(5), function () {
             $studentCounts = User::query()
                 ->setEagerLoads([])
-                ->whereHas('roles', fn ($q) => $q->where('name', 'student'))
+                ->students()
                 ->selectRaw('COUNT(*) as total_students, SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as active_students')
                 ->first();
 

@@ -348,20 +348,6 @@ class Show extends Component
         $this->show_alert = false;
     }
 
-    public function getCourseid($user)
-    {
-        $exam_month_pre =  'pre_' . strtolower($user->exam_month);
-        $curso = Course::where('code', $exam_month_pre)->first();
-        return $curso->id;
-    }
-
-    public function getSid($user)
-    {
-        $exam_month_pre =  'pre_' . strtolower($user->exam_month);
-        $curso = Course::where('code', $exam_month_pre)->first();
-        return $curso->id;
-    }
-
     public function asisitioReunion($datos_reunion)
     {
         $date = Carbon::today()->toDateString();
@@ -376,7 +362,7 @@ class Show extends Component
         return CourseSession::where('date', $date)
             ->where('time', $datos_reunion[0] . ':00')
             ->where('student_groups_id', $std_grp_id)
-            ->whereHas('users', function ($q) use ($logged_user) {
+            ->whereHas('attendances', function ($q) use ($logged_user) {
                 $q->where('user_id', $logged_user->id);
             })
             ->exists();
@@ -407,7 +393,7 @@ class Show extends Component
         return CourseSession::where('date', Carbon::today()->toDateString())
             ->where('student_groups_id', $std_grp_id)
             ->whereIn('time', $times)
-            ->whereHas('users', function ($q) use ($logged_user) {
+            ->whereHas('attendances', function ($q) use ($logged_user) {
                 $q->where('user_id', $logged_user->id);
             })
             ->pluck('time')

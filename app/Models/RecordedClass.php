@@ -18,8 +18,6 @@ class RecordedClass extends Model
         'science_link',
         'social_link',
         'orientation_link',
-        'created_at',
-        'updated_at',
     ];
 
     /**

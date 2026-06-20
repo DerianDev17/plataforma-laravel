@@ -40,14 +40,14 @@
                         <div class="font-bold text-blue-700 flex flex-row">
                             <div>
                                 @can ('crud_course_programs')
-                                <x-jet-input class="mt-1 block w-full text-xl" id="toUpdateTopicTitle-{{$topic->id}}" type="text" value="{{$topic->topic_title}}" />
+                                <x-input class="mt-1 block w-full text-xl" id="toUpdateTopicTitle-{{$topic->id}}" type="text" value="{{$topic->topic_title}}" />
                                 @else
                                 <div class="mt-1 block w-full text-xl">{{$topic->topic_title}}</div>
                                 @endcan
                             </div>
                             @can ('crud_course_programs')
                             <!-- boton actualizar -->
-                            <button onclick="updateTopicJS({{$topic->id}})" class="flex items-center font-medium tracking-wide text-green-400 transition-colors duration-200 transform rounded-md hover:bg-green-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-green-100 dark:focus:bg-gray-700">
+                            <button onclick="updateTopicJS({{$topic->id}})" class="flex items-center font-medium tracking-wide text-green-400 transition-colors duration-200 transform rounded-md hover:bg-green-100 focus:outline-none focus:bg-green-100">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                 </svg>
@@ -57,7 +57,7 @@
                         <div class="text-center self-center">
                             @can ('crud_course_programs')
                             <!-- boton borrar -->
-                            <button onclick="confirm('¿Esta seguro de borrar el contenido?') || event.stopImmediatePropagation()" wire:click.prevent="deleteTopic({{$topic->id}})" class="flex items-center font-medium tracking-wide text-red-500 transition-colors duration-200 transform rounded-md hover:bg-red-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-red-100 dark:focus:bg-gray-700">
+                            <button onclick="confirm('¿Esta seguro de borrar el contenido?') || event.stopImmediatePropagation()" wire:click.prevent="deleteTopic({{$topic->id}})" class="flex items-center font-medium tracking-wide text-red-500 transition-colors duration-200 transform rounded-md hover:bg-red-100 focus:outline-none focus:bg-red-100">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                 </svg>
@@ -67,11 +67,11 @@
                     </div>
                     <div class="px-4 py-5 border-b rounded-t sm:px-6">
                         <!-- <h3>Recursos</h3> -->
-                        <div class="bg-white dark:bg-gray-800 overflow-hidden border-black-300 border-1 rounded-sm">
+                        <div class="bg-white overflow-hidden border-black-300 border-1 rounded-sm">
                             <ul id="resources_list-{{$topic->id}}" class="divide-y divide-gray-200" data-topicId="{{$topic->id}}">
                                 @forelse ($topic->resources as $resource)
                                 <li id="resource_item-{{$resource->id}}-list-{{$topic->id}}" class="" data-resource_id="{{$resource->id}}">
-                                    <div class="block hover:bg-gray-50 dark:hover:bg-gray-900">
+                                    <div class="block hover:bg-gray-50">
                                         <div class="px-4 py-4 sm:px-6">
                                             <div class="flex items-center justify-between">
                                                 <div class="flex flex-row">
@@ -83,18 +83,18 @@
                                                         </svg>
                                                     </span>
                                                     @endcan
-                                                    <p class="text-md text-gray-700 dark:text-white md:truncate">{{$resource->resource_title}}</p>
+                                                    <p class="text-md text-gray-700 md:truncate">{{$resource->resource_title}}</p>
                                                 </div>
                                                 @can ('crud_course_programs')
                                                 <div class="flex flex-row">
                                                     <!-- boton actualizar recurso -->
-                                                    <button wire:click.prevent="prepareToEditResource({{$resource->id}})" class="flex items-center font-medium tracking-wide text-green-400 transition-colors duration-200 transform rounded-md hover:bg-text-green-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-text-green-100 dark:focus:bg-gray-700">
+                                                    <button wire:click.prevent="prepareToEditResource({{$resource->id}})" class="flex items-center font-medium tracking-wide text-green-400 transition-colors duration-200 transform rounded-md hover:bg-text-green-100 focus:outline-none focus:bg-text-green-100">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                                         </svg>
                                                     </button>
                                                     <!-- boton borrar recurso -->
-                                                    <button wire:click.prevent="deleteResource({{$resource->id}})" class="flex items-center font-medium tracking-wide text-red-500 transition-colors duration-200 transform rounded-md hover:bg-red-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-red-100 dark:focus:bg-gray-700">
+                                                    <button wire:click.prevent="deleteResource({{$resource->id}})" class="flex items-center font-medium tracking-wide text-red-500 transition-colors duration-200 transform rounded-md hover:bg-red-100 focus:outline-none focus:bg-red-100">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                                             <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                                         </svg>
@@ -144,8 +144,8 @@
                 @can ('crud_course_programs')
                 <div class="grid grid-cols-6 gap-4 place-content-center bg-white my-2 ">
                     <div class="col-span-5">
-                        <x-jet-input id="topic_title" type="text" class="m-1 block w-full" wire:model="new_topic_title" />
-                        <!-- <x-jet-input-error for="topic_title" class="mt-2" /> -->
+                        <x-input id="topic_title" type="text" class="m-1 block w-full" wire:model="new_topic_title" />
+                        <!-- <x-input-error for="topic_title" class="mt-2" /> -->
                     </div>
                     <div class="text-center self-center">
                         <a wire:click.prevent="addTopic" href="#" class="text-indigo-600 hover:text-indigo-900">
@@ -197,7 +197,7 @@
                             <label for="titleInput" class="block text-gray-700 text-sm font-bold mb-2">Archivo:</label>
                             <input type="file" wire:model="resourceFile" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                             <div wire:loading wire:target="resourceFile">Cargando...</div>
-                            <x-jet-input-error for="resourceFile" class="mt-2" />
+                            <x-input-error for="resourceFile" class="mt-2" />
                         </div>
                     </div>
                     @endif
@@ -281,7 +281,7 @@
         });
     }
 
-    document.addEventListener('livewire:load', function() {
+    document.addEventListener('livewire:init', function() {
         setupDragAndDrop();
     })
 

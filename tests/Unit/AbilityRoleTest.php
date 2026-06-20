@@ -4,10 +4,12 @@ namespace Tests\Unit;
 
 use App\Models\Ability;
 use App\Models\Role;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AbilityRoleTest extends TestCase
 {
+    use RefreshDatabase;
     /** @test */
     public function ability_has_roles_relationship()
     {
@@ -31,33 +33,20 @@ class AbilityRoleTest extends TestCase
     }
 
     /** @test */
-    public function ability_allowTo_accepts_string_and_uses_correct_model()
+    public function ability_can_be_created_with_attributes()
     {
-        $fakeAbility = new Ability(['name' => 'watch_lessons']);
-        $fakeAbility->id = 1;
+        $ability = Ability::create(['name' => 'test_ability']);
 
-        $ability = $this->getMockBuilder(Ability::class)
-            ->onlyMethods(['roles'])
-            ->getMock();
-
-        $ability->method('roles')->willReturn(new class {
-            public function save($model) {}
-        });
-
-        $this->assertTrue(true);
+        $this->assertDatabaseHas('abilities', ['name' => 'test_ability']);
+        $this->assertEquals('test_ability', $ability->name);
     }
 
     /** @test */
-    public function role_allowTo_accepts_string_and_uses_correct_model()
+    public function role_can_be_created_with_attributes()
     {
-        $role = $this->getMockBuilder(Role::class)
-            ->onlyMethods(['abilities'])
-            ->getMock();
+        $role = Role::create(['name' => 'test_role']);
 
-        $role->method('abilities')->willReturn(new class {
-            public function save($model) {}
-        });
-
-        $this->assertTrue(true);
+        $this->assertDatabaseHas('roles', ['name' => 'test_role']);
+        $this->assertEquals('test_role', $role->name);
     }
 }

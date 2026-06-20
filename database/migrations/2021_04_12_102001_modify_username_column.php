@@ -14,7 +14,7 @@ class ModifyUsernameColumn extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('username')->unique()->change();
+            $table->unique('username');
         });
     }
 

@@ -11,8 +11,8 @@
             @include('livewire.create')
             @endif
 
-            <x-jet-input type="text" placeholder="Carrera" wire:model="searchTerm" />
-            <x-jet-input type="text" placeholder="Puntaje" wire:model="searchedGrade" />
+            <x-input type="text" placeholder="Carrera" wire:model="searchTerm" />
+            <x-input type="text" placeholder="Puntaje" wire:model="searchedGrade" />
             
 
             <div class="" style="overflow-x:auto;">
@@ -79,3 +79,4 @@
     })
 </script>
 @endpush
+

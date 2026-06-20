@@ -19,9 +19,7 @@ class UserController extends Controller
     {
         set_time_limit(0);
 
-        $users = User::whereHas('roles', function ($q) {
-                $q->where('name', 'student');
-            })
+        $users = User::students()
             ->where('email', 'like', '%gmail%')
             ->take(200)
             ->get();

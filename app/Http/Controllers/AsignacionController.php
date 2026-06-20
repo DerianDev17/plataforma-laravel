@@ -26,9 +26,12 @@ class AsignacionController extends Controller
 
     public function store(Request $request)
     {
-        $user = User::find($request->rol);
-        $ability = Role::find($request->ability);
-        $user->abilities()->save($ability);
+        $user = User::find($request->user);
+        $role = Role::find($request->rol);
+
+        if ($user && $role) {
+            $user->roles()->attach($role);
+        }
 
         return redirect()->route('permisos.index')
             ->with('success', 'Permiso asignado correctamente.');

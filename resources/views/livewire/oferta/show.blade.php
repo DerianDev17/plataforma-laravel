@@ -7,8 +7,8 @@
 
     <x-ui.alert />
 
-    <x-jet-input type="text"  placeholder="Buscar" wire:model="searchTerm" />
-    <x-jet-input type="text"  placeholder="Por puntaje" wire:model="scoreSearchTerm" />
+    <x-input type="text"  placeholder="Buscar" wire:model="searchTerm" />
+    <x-input type="text"  placeholder="Por puntaje" wire:model="scoreSearchTerm" />
 
     @if (count($ofertas)>0)
     <div class="py-10 o-table">
@@ -94,3 +94,4 @@
 <script type="text/javascript">
 </script>
 @endpush
+

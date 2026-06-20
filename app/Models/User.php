@@ -14,6 +14,7 @@ use App\Utils\ValidarIdentificacion;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\StudentGroup;
 use App\Utils\Horarios;
+use Maatwebsite\Excel\Facades\Excel;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -359,7 +360,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function scopeStudents($query)
     {
         return $query->whereHas('roles', function ($q) {
-            $q->where('role_id', 2);
+            $q->where('name', 'student');
         });
     }
 

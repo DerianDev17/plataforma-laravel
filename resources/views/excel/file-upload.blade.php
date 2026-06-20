@@ -55,9 +55,9 @@
                             </div>
 
                             <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                                <x-jet-button>
+                                <x-button>
                                     Subir excel
-                                </x-jet-button>
+                                </x-button>
                             </div>
                     </div>
                     </form>
@@ -68,3 +68,4 @@
     </div>
     </div>
 </x-admin-layout>
+

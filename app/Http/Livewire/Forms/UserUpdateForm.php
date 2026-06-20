@@ -49,7 +49,7 @@ class UserUpdateForm extends Component
         
             $student->save();
 
-            return redirect()->to('/dashboard');
+            return redirect()->route('dashboard');
     }
 
 

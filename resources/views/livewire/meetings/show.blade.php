@@ -130,7 +130,7 @@
                                         <td class="{{ $currentScheduleDay === $day['day'] ? 'is-today' : '' }}">
                                             <span class="class-time">{{ $row[$day['time']] ?? '--:--' }}</span>
                                             @if($zoom_link)
-                                                <a class="class-subject meeting-open-link" href="{{ $zoom_link }}" target="_blank" rel="noopener">
+                                                <a class="class-subject meeting-open-link" href="{{ $zoom_link }}" target="_blank" rel="noopener noreferrer">
                                                     {{ $row[$day['subject']] ?? 'Clase por confirmar' }}
                                                 </a>
                                             @else

@@ -26,8 +26,6 @@ class Main extends Component
         'updateOrdering' => 'updateOrdering',
     ];
 
-    protected $fillable = ['topic_title'];
-
     public $curr_user;
 
     public $test;
@@ -345,7 +343,7 @@ class Main extends Component
         $this->refreshData();
 
         // emitir evento para que se vuelva a ejecutar el js que habilita el drag and drop
-        $this->emit('selectHasChanged');
+        $this->dispatch('selectHasChanged');
     }
 
     // el estudiante no debe tener acceso a la info de otros paralelos.
@@ -374,7 +372,7 @@ class Main extends Component
         $this->refreshData();
 
         // emitir evento para que se vuelva a ejecutar el js que habilita el drag and drop
-        $this->emit('selectHasChanged');
+        $this->dispatch('selectHasChanged');
     }
 
     public function filterResources()

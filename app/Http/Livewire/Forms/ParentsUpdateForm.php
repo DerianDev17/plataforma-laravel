@@ -72,7 +72,7 @@ class ParentsUpdateForm extends Component
         $student->telefonoMadre = $this->celularm;
         $student->save();
 
-        return redirect()->to('/dashboard');
+        return redirect()->route('dashboard');
     }
 
     public function mount()

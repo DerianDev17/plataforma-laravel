@@ -1,4 +1,4 @@
-<x-app-layout>
+﻿<x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Perfil') }}
@@ -10,7 +10,7 @@
             @if (Laravel\Fortify\Features::canUpdateProfileInformation())
             @livewire('profile.update-profile-information-form')
 
-            <x-jet-section-border />
+            <x-section-border />
             @endif
 
             @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::updatePasswords()))
@@ -18,7 +18,7 @@
                 @livewire('profile.update-password-form')
             </div>
 
-            <x-jet-section-border />
+            <x-section-border />
             @endif
 
             @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
@@ -26,7 +26,7 @@
                 @livewire('profile.two-factor-authentication-form')
             </div>
 
-            <x-jet-section-border />
+            <x-section-border />
             @endif
 
             <div class="mt-10 sm:mt-0">
@@ -34,7 +34,7 @@
             </div>
 
             @if ( Auth::user()->hasRole('superadmin') || true )
-            <x-jet-section-border />
+            <x-section-border />
 
             <div class="mt-10 sm:mt-0">
                 <div wire:id="OL3oyNJKrltreEP6vYbh" class="md:grid md:grid-cols-3 md:gap-6">
@@ -72,9 +72,9 @@
                                 </div>
 
                                 <div class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6">
-                                    <x-jet-dropdown-link {{-- onclick="generarPdf(event)" --}} href="{{ Auth::user()->certif_intentos > 0 ? route('pdfview',['download'=>'pdf']) : '#'}}">
+                                    <x-dropdown-link {{-- onclick="generarPdf(event)" --}} href="{{ Auth::user()->certif_intentos > 0 ? route('pdfview',['download'=>'pdf']) : '#'}}">
                                         {{ __('Certificado') }}
-                                    </x-jet-dropdown-link>
+                                    </x-dropdown-link>
                                 </div>
                             </div>
                         </form>
@@ -82,7 +82,7 @@
                 </div>
             </div>
             @endif
-            <x-jet-section-border />
+            <x-section-border />
 
             <div class="mt-10 sm:mt-0">
                 @livewire('profile.delete-user-form')

@@ -66,7 +66,7 @@ class Show extends Component
         $this->isOpen = true;
         $this->resetErrorBag();
         $this->resetValidation();
-        $this->emit('modalOpened');
+        $this->dispatch('modalOpened');
     }
 
     public function closeModal()

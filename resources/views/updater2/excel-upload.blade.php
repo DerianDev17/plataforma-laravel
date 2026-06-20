@@ -13,7 +13,7 @@
                         @if ($message = Session::get('success'))
                         <div class="alert alert-success alert-block">
                             <button type="button" class="close" data-dismiss="alert">×</button>
-                            <strong>{!! $message !!}</strong>
+                            <strong>{{ $message }}</strong>
                         </div>
                         @endif
 
@@ -60,9 +60,9 @@
                                 <a href="{{ route('dashboard-students') }}" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 mr-2">
                                     Editar pago individual
                                 </a>
-                                <x-jet-button>
+                                <x-button>
                                     Subir excel
-                                </x-jet-button>
+                                </x-button>
                             </div>
                     </div>
 
@@ -73,3 +73,4 @@
     </div>
     </div>
 </x-admin-layout>
+
