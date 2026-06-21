@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\User;
 
-use App\Imports\StudentsImportar;
 use App\Models\User;
+use App\Services\StudentImport\StudentImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,14 +11,15 @@ class CreateUsernameTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function service(): StudentImportService
+    {
+        return app(StudentImportService::class);
+    }
+
     /** @test */
     public function username_is_generated_from_first_and_last_name()
     {
-        $importer = new StudentsImportar(false);
-
-        $username = (new \ReflectionClass($importer))
-            ->getMethod('createUsername')
-            ->invoke($importer, 'Juan', 'Perez Solis');
+        $username = $this->service()->generateUsername('Juan', 'Perez Solis');
 
         $this->assertStringStartsWith('jperezs', $username);
         $this->assertStringEndsWith('EUS', $username);
@@ -27,11 +28,7 @@ class CreateUsernameTest extends TestCase
     /** @test */
     public function username_removes_accents()
     {
-        $importer = new StudentsImportar(false);
-
-        $username = (new \ReflectionClass($importer))
-            ->getMethod('createUsername')
-            ->invoke($importer, 'José', 'García López');
+        $username = $this->service()->generateUsername('José', 'García López');
 
         $this->assertStringStartsWith('jgarcial', $username);
         $this->assertStringNotContainsString('é', $username);
@@ -41,11 +38,7 @@ class CreateUsernameTest extends TestCase
     /** @test */
     public function username_becomes_lowercase()
     {
-        $importer = new StudentsImportar(false);
-
-        $username = (new \ReflectionClass($importer))
-            ->getMethod('createUsername')
-            ->invoke($importer, 'MARIA', 'RODRIGUEZ MENDOZA');
+        $username = $this->service()->generateUsername('MARIA', 'RODRIGUEZ MENDOZA');
 
         $this->assertStringStartsWith('mrodriguezm', $username);
     }
@@ -58,11 +51,7 @@ class CreateUsernameTest extends TestCase
             'email' => 'existing@test.com',
         ]);
 
-        $importer = new StudentsImportar(false);
-
-        $username = (new \ReflectionClass($importer))
-            ->getMethod('createUsername')
-            ->invoke($importer, 'Test', 'User');
+        $username = $this->service()->generateUsername('Test', 'User');
 
         $this->assertStringEndsWith('EUS', $username);
         $this->assertNotEquals('testuserEUS', $username);
@@ -71,11 +60,7 @@ class CreateUsernameTest extends TestCase
     /** @test */
     public function username_handles_single_last_name()
     {
-        $importer = new StudentsImportar(false);
-
-        $username = (new \ReflectionClass($importer))
-            ->getMethod('createUsername')
-            ->invoke($importer, 'Ana', 'Lopez');
+        $username = $this->service()->generateUsername('Ana', 'Lopez');
 
         $this->assertStringStartsWith('alopez', $username);
         $this->assertStringEndsWith('EUS', $username);
@@ -84,11 +69,7 @@ class CreateUsernameTest extends TestCase
     /** @test */
     public function eliminar_acentos_replaces_all_accented_characters()
     {
-        $importer = new StudentsImportar(false);
-
-        $result = (new \ReflectionClass($importer))
-            ->getMethod('eliminar_acentos')
-            ->invoke($importer, 'ÁÉÍÓÚáéíóúÑñÇç');
+        $result = $this->service()->stripAccents('ÁÉÍÓÚáéíóúÑñÇç');
 
         $this->assertEquals('AEIOUaeiouNnCc', $result);
     }

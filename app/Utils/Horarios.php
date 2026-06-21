@@ -4,6 +4,7 @@ namespace App\Utils;
 
 use Illuminate\Support\Facades\Log;
 use App\Models\Subject;
+use Illuminate\Support\Facades\Cache;
 
 class Horarios
 {
@@ -11,12 +12,14 @@ class Horarios
 
     public function __construct()
     {
-        $this->subjects = Subject::all();
+        $this->subjects = Cache::remember('subjects.code_name', now()->addHours(6), function () {
+            return Subject::query()->pluck('name', 'code')->all();
+        });
     }
 
     public function subj_name($code)
     {
-        return $this->subjects->firstWhere('code', $code)->name ?? $code;
+        return $this->subjects[$code] ?? $code;
     }
 
     public function get_horario($paralelo)

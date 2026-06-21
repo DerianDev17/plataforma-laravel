@@ -8,15 +8,12 @@ use App\Models\CourseSession;
 use App\Models\StudentGroup;
 use App\Models\User;
 use Livewire\Component;
-use App\Traits\ZoomJWT;
 use App\Utils\Horarios;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class Show extends Component
 {
-    use ZoomJWT;
-
     public $meetings;
     public $user;
     public $tipo_zoom;
@@ -184,30 +181,6 @@ class Show extends Component
     public function get_student_meetings($student)
     {
         $student_meetings = [];
-
-        $path = 'users/me/meetings';
-
-        // $response = $this->zoomGet($path);
-
-        // $data = json_decode($response->body(), true);
-
-        // $data['meetings'] = array_map(function (&$m) {
-        //   // cambiar fecha a otro formato
-        //   $m['start_at'] = $this->toUnixTimeStamp($m['start_time'], $m['timezone']);
-        //   return $m;
-        // }, $data['meetings']);
-
-        // dd($data['meetings']);
-
-        // foreach ($data['meetings'] as $meeting) {
-        //   // var_dump($meeting['id']);
-        //   // if ($meeting['id'] === 91961110615) {
-        //   //   array_push($student_meetings, $meeting);
-        //   // }
-        // }
-
-        $path = 'users/me/meetings';
-
 
         return $student_meetings;
     }

@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 
 class PermissionsSeeder extends Seeder
 {
+    private const LOCAL_SUPERADMIN_PASSWORD = 'holahola14';
+
     /**
      * Run the database seeds.
      *
@@ -24,7 +26,9 @@ class PermissionsSeeder extends Seeder
         $admin->email =                     'admin@mail.com';
         $admin->username =                  'superadmin';
         $admin->email_verified_at =         now();
-        $admin->password =                  Hash::make('holahola14');
+        if (! $admin->exists || filled(env('SEED_SUPERADMIN_PASSWORD'))) {
+            $admin->password = Hash::make($this->superAdminSeedPassword());
+        }
         $admin->remember_token =            Str::random(10);
         $admin->last_name =                 '';
         $admin->cellphone =                 '';
@@ -120,5 +124,11 @@ class PermissionsSeeder extends Seeder
         //     'user_id' => 4,
         //     'role_id' => 2,
         // ]);
+    }
+
+    private function superAdminSeedPassword(): string
+    {
+        // Local/testing seed fallback. Set SEED_SUPERADMIN_PASSWORD outside local environments.
+        return env('SEED_SUPERADMIN_PASSWORD') ?: self::LOCAL_SUPERADMIN_PASSWORD;
     }
 }

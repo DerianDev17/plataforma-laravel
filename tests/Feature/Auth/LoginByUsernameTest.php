@@ -22,7 +22,7 @@ class LoginByUsernameTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'jdoeeus',
+            'username' => 'jdoeeus',
             'password' => 'password123',
         ]);
 
@@ -41,7 +41,7 @@ class LoginByUsernameTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'jdoeeus',
+            'username' => 'jdoeeus',
             'password' => 'wrong-password',
         ]);
 
@@ -53,7 +53,7 @@ class LoginByUsernameTest extends TestCase
     public function login_fails_with_nonexistent_username()
     {
         $response = $this->post('/login', [
-            'email' => 'nonexistent_user',
+            'username' => 'nonexistent_user',
             'password' => 'password123',
         ]);
 
@@ -73,7 +73,7 @@ class LoginByUsernameTest extends TestCase
         ]);
 
         $this->post('/login', [
-            'email' => 'janedoe',
+            'username' => 'janedoe',
             'password' => 'password123',
         ]);
 
@@ -92,7 +92,7 @@ class LoginByUsernameTest extends TestCase
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'jane@example.com',
+            'username' => 'jane@example.com',
             'password' => 'password123',
         ]);
 
@@ -112,5 +112,16 @@ class LoginByUsernameTest extends TestCase
         $response = $this->actingAs($user)->get('/login');
 
         $response->assertRedirect('/dashboard');
+    }
+
+    /** @test */
+    public function login_page_uses_username_input_without_email_validation()
+    {
+        $response = $this->get('/login');
+
+        $response->assertOk();
+        $response->assertSee('name="username"', false);
+        $response->assertSee('type="text"', false);
+        $response->assertDontSee('type="email"', false);
     }
 }

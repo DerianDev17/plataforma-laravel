@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Asistencias;
 use App\Models\Attendance;
 use App\Models\CourseSession;
 use App\Models\User;
+use App\Services\Attendance\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -41,37 +42,14 @@ class Show extends Component
             return;
         }
 
-        if (! $this->canRegisterAttendance($session)) {
-            session()->flash('message', 'La asistencia solo puede registrarse durante la ventana habilitada para la clase.');
-            return;
-        }
+        $result = app(AttendanceService::class)->registerStudentAttendance($user, $session);
 
-        $attendance = Attendance::firstOrCreate([
-            'user_id' => $user->id,
-            'course_session_id' => $session->id,
-        ]);
-
-        if ($attendance->wasRecentlyCreated) {
-            Cache::forget($this->studentStatsCacheKey($user));
-        }
-
-        session()->flash(
-            'message',
-            $attendance->wasRecentlyCreated
-                ? 'Asistencia registrada correctamente.'
-                : 'Ya registraste asistencia para esta clase.'
-        );
+        session()->flash('message', $result->message());
     }
 
     public function canRegisterAttendance(CourseSession $session): bool
     {
-        $start = Carbon::parse($session->date . ' ' . $session->time);
-        $now = Carbon::now();
-
-        return $now->between(
-            $start->copy()->subMinutes(15),
-            $start->copy()->addMinutes(90)
-        );
+        return app(AttendanceService::class)->canStudentRegister(auth()->user(), $session);
     }
 
     public function hasAttendance(CourseSession $session): bool
@@ -85,8 +63,10 @@ class Show extends Component
             ->with(['student_group', 'attendances' => function ($query) use ($user): void {
                 $query->where('user_id', $user->id);
             }])
-            ->whereDate('date', '>=', Carbon::today()->subDay())
-            ->whereDate('date', '<=', Carbon::today()->addDays(14))
+            ->whereBetween('date', [
+                Carbon::today()->subDay()->toDateString(),
+                Carbon::today()->addDays(14)->toDateString(),
+            ])
             ->orderBy('date')
             ->orderBy('time')
             ->limit(18)
@@ -109,21 +89,25 @@ class Show extends Component
     private function studentStats(User $user): array
     {
         return Cache::remember($this->studentStatsCacheKey($user), now()->addMinutes(5), function () use ($user): array {
+            $now = Carbon::now();
+            $today = Carbon::today();
             $baseQuery = Attendance::where('user_id', $user->id);
 
             return [
                 'total' => (clone $baseQuery)->count(),
-                'month' => (clone $baseQuery)
-                    ->whereYear('created_at', Carbon::now()->year)
-                    ->whereMonth('created_at', Carbon::now()->month)
-                    ->count(),
+                'month' => (clone $baseQuery)->whereBetween('created_at', [
+                    $now->copy()->startOfMonth(),
+                    $now->copy()->endOfMonth(),
+                ])->count(),
                 'week' => (clone $baseQuery)->whereBetween('created_at', [
-                    Carbon::now()->startOfWeek(),
-                    Carbon::now()->endOfWeek(),
+                    $now->copy()->startOfWeek(),
+                    $now->copy()->endOfWeek(),
                 ])->count(),
                 'next' => $this->sessionsForUser($user)
-                    ->whereDate('date', '>=', Carbon::today())
-                    ->whereDate('date', '<=', Carbon::today()->addDays(7))
+                    ->whereBetween('date', [
+                        $today->toDateString(),
+                        $today->copy()->addDays(7)->toDateString(),
+                    ])
                     ->count(),
             ];
         });

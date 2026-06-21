@@ -7,11 +7,29 @@ use App\Models\StudentGroup;
 use App\Models\User;
 use Database\Seeders\PermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class ZoomRegistrantSyncTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['services.zoom.api_url' => 'https://api.zoom.test/']);
+
+        Http::fake([
+            'https://zoom.us/oauth/token' => Http::response(['access_token' => 'oauth-token'], 200),
+            'https://api.zoom.test/webinars/*/registrants/status*' => Http::response([], 204),
+            'https://api.zoom.test/webinars/*/registrants*' => Http::response(['registrants' => []], 200),
+            'https://api.zoom.test/webinars/*' => Http::response([
+                'occurrences' => [['occurrence_id' => 'occurrence-1']],
+            ], 200),
+            'https://api.zoom.test/*' => Http::response(['meetings' => []], 200),
+        ]);
+    }
 
     /** @test */
     public function set_zoom_ids_resets_all_student_zoom_fields()
@@ -45,7 +63,7 @@ class ZoomRegistrantSyncTest extends TestCase
     }
 
     /** @test */
-    public function register_to_webinar_handles_missing_group()
+    public function register_to_webinar_uses_oauth_client()
     {
         $this->seed(PermissionsSeeder::class);
 
@@ -64,8 +82,12 @@ class ZoomRegistrantSyncTest extends TestCase
             ->getMethod('registerToWebinarZoom')
             ->invoke($controller, $student);
 
-        $this->assertIsArray($response);
-        $this->assertArrayHasKey('failed', $response);
+        $this->assertTrue($response->ok());
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'webinars/999/registrants')
+                && $request->hasHeader('Authorization', 'Bearer oauth-token');
+        });
     }
 
     /** @test */
@@ -169,7 +191,7 @@ class ZoomRegistrantSyncTest extends TestCase
     }
 
     /** @test */
-    public function approve_students_handles_invalid_webinar()
+    public function approve_students_uses_oauth_client()
     {
         $controller = app(\App\Http\Controllers\Zoom\MeetingController::class);
 
@@ -177,7 +199,6 @@ class ZoomRegistrantSyncTest extends TestCase
             ->getMethod('approveStudents')
             ->invoke($controller, 999999, []);
 
-        $this->assertIsArray($response);
-        $this->assertArrayHasKey('failed', $response);
+        $this->assertSame(204, $response->status());
     }
 }

@@ -1,109 +1,143 @@
-<div class="absolute col-container min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-    <div class="fixed inset-0 transition-opacity">
-        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-    </div>
-    <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>
-    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full" role="dialog" aria-modal="true" aria-labelledby="modal-headline">
-        <form>
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="">
-                    <div class="mb-4">
-                        <label for="exampleFormControlInput1" class="block text-gray-700 text-sm font-bold mb-2">Nombre:<span class="text-red-700">*</span></label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput1" placeholder="Enter First Name" wire:model="name">
-                        @error('name') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Apellido:</label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Last Name" wire:model="last_name">
-                        @error('last_name') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4 hidden">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Rol:</label>
-                        <select class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" wire:model="role">
-                            @foreach($roles as $rol)
-                            <option value="{{$rol->name}}">{{$rol->name}}</option>
-                            @endforeach
-                        </select>
+<div class="eus-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="user-form-title">
+    <form class="eus-modal user-admin-modal" wire:submit.prevent="store">
+        <div class="eus-modal-header">
+            <div>
+                <h2 id="user-form-title" class="eus-modal-title">
+                    {{ $from_create ? 'Nuevo usuario' : 'Editar usuario' }}
+                </h2>
+                <p class="muted-small user-admin-modal-copy">
+                    {{ $from_create ? 'Crea la cuenta de acceso del estudiante.' : 'Actualiza datos de acceso, contacto y pago.' }}
+                </p>
+            </div>
+            <button type="button" class="eus-btn eus-btn-ghost eus-btn-icon" wire:click="closeModal" aria-label="Cerrar formulario">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
 
+        <div class="eus-modal-body user-admin-form">
+            <section class="user-admin-form-section" aria-label="Identidad">
+                <div class="user-admin-section-title">Identidad</div>
+                <div class="user-admin-form-grid">
+                    <div>
+                        <label for="user-name" class="eus-label eus-label-required">Nombre</label>
+                        <input id="user-name" type="text" class="eus-input" wire:model.defer="name" autocomplete="given-name">
+                        @error('name') <span class="eus-error">{{ $message }}</span> @enderror
                     </div>
-                    <div class="mb-4 hidden">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Password:<span class="text-red-700">*</span></label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Password" wire:model="password">
-                        @error('password') <span class="text-red-500">{{ $message }}</span>@enderror
+                    <div>
+                        <label for="user-last-name" class="eus-label eus-label-required">Apellido</label>
+                        <input id="user-last-name" type="text" class="eus-input" wire:model.defer="last_name" autocomplete="family-name">
+                        @error('last_name') <span class="eus-error">{{ $message }}</span> @enderror
                     </div>
-                    <div class="mb-4">
-                        <label for="payment_status" class="block text-gray-700 text-sm font-bold mb-2">Estado de pago:<span class="text-red-700">*</span></label>
-                        <select style="background-color: white;" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="payment_status" wire:model="payment_status">
-                            @foreach($paymentStatusOptions ?? \App\Models\User::paymentStatusOptions() as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                        @error('payment_status') <span class="text-red-500">{{ $message }}</span>@enderror
+                    <div>
+                        <label for="user-cedula" class="eus-label eus-label-required">Cedula</label>
+                        <input id="user-cedula" type="text" class="eus-input" wire:model.defer="cedula" inputmode="numeric">
+                        @error('cedula') <span class="eus-error">{{ $message }}</span> @enderror
                     </div>
-                    <div class="mb-4">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Cédula:</label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Cédula" wire:model="cedula">
-                        @error('cedula') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Celular:</label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Celular" wire:model="cellphone">
-                        @error('celular') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Email:<span class="text-red-700">*</span></label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Email" wire:model="email">
-                        @error('email') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4 hidden">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Convencional:</label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Convencional" wire:model="fixedphone">
-                        @error('fixedphone') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4 hidden">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Colegio:</label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Colegio" wire:model="highschool">
-                        @error('highschool') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4 hidden">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Especialidad:</label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Especialidad" wire:model="especialty">
-                        @error('especialty') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4 hidden">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Paralelo:</label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Paralelo" wire:model="paralelo">
-                        @error('paralelo') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4 hidden">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Ciudad:</label>
-                        <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" placeholder="Enter Ciudad" wire:model="city">
-                        @error('city') <span class="text-red-500">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="mb-4">
-                        <label for="exampleFormControlInput2" class="block text-gray-700 text-sm font-bold mb-2">Fecha de examen:</label>
-                        <select style="background-color: white;" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="exampleFormControlInput2" wire:model="exam_month">
+                    <div>
+                        <label for="user-exam-month" class="eus-label eus-label-required">Fecha de examen</label>
+                        <select id="user-exam-month" class="eus-select" wire:model.defer="exam_month">
                             <option value="Junio">Junio</option>
                             <option value="Febrero">Febrero</option>
                             <option value="Julio">Julio</option>
                         </select>
+                        @error('exam_month') <span class="eus-error">{{ $message }}</span> @enderror
                     </div>
-
                 </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <span class="flex w-full rounded-md shadow-sm sm:ml-3 sm:w-auto">
-                    <button wire:click.prevent="store()" type="button" class="inline-flex justify-center w-full rounded-md border border-transparent px-4 py-2 bg-green-600 text-base leading-6 font-medium text-white shadow-sm hover:bg-green-500 focus:outline-none focus:border-green-700 focus:shadow-outline-green transition ease-in-out duration-150 sm:text-sm sm:leading-5">
-                        Guardar
-                    </button>
-                </span>
-                <span class="mt-3 flex w-full rounded-md shadow-sm sm:mt-0 sm:w-auto">
-                    <button wire:click="closeModal()" type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 px-4 py-2 bg-white text-base leading-6 font-medium text-gray-700 shadow-sm hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition ease-in-out duration-150 sm:text-sm sm:leading-5">
-                        Cancelar
-                    </button>
-                </span>
-            </div>
-        </form>
-    </div>
-</div>
+            </section>
+
+            <section class="user-admin-form-section" aria-label="Acceso">
+                <div class="user-admin-section-title">Acceso</div>
+                <div class="user-admin-form-grid">
+                    <div>
+                        <label for="user-username" class="eus-label eus-label-required">Usuario</label>
+                        <input id="user-username" type="text" class="eus-input" wire:model.defer="username" autocomplete="username">
+                        @error('username') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label for="user-password" class="eus-label {{ $from_create ? 'eus-label-required' : '' }}">Contrasena</label>
+                        <input
+                            id="user-password"
+                            type="password"
+                            class="eus-input"
+                            wire:model.defer="password"
+                            autocomplete="{{ $from_create ? 'new-password' : 'off' }}"
+                            placeholder="{{ $from_create ? 'Minimo 8 caracteres' : 'Dejar en blanco para conservarla' }}"
+                        >
+                        @error('password') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label for="user-email" class="eus-label eus-label-required">Email</label>
+                        <input id="user-email" type="email" class="eus-input" wire:model.defer="email" autocomplete="email">
+                        @error('email') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label for="user-payment-status" class="eus-label eus-label-required">Estado de pago</label>
+                        <select id="user-payment-status" class="eus-select" wire:model.defer="payment_status">
+                            @foreach($paymentStatusOptions ?? \App\Models\User::paymentStatusOptions() as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('payment_status') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+            </section>
+
+            <section class="user-admin-form-section" aria-label="Contacto y datos academicos">
+                <div class="user-admin-section-title">Contacto y datos academicos</div>
+                <div class="user-admin-form-grid">
+                    <div>
+                        <label for="user-cellphone" class="eus-label eus-label-required">Celular</label>
+                        <input id="user-cellphone" type="text" class="eus-input" wire:model.defer="cellphone" inputmode="tel" autocomplete="tel">
+                        @error('cellphone') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label for="user-city" class="eus-label eus-label-required">Ciudad</label>
+                        <input id="user-city" type="text" class="eus-input" wire:model.defer="city" autocomplete="address-level2">
+                        @error('city') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label for="user-highschool" class="eus-label eus-label-required">Colegio</label>
+                        <input id="user-highschool" type="text" class="eus-input" wire:model.defer="highschool">
+                        @error('highschool') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label for="user-regimen" class="eus-label eus-label-required">Regimen</label>
+                        <input id="user-regimen" type="text" class="eus-input" wire:model.defer="regimen">
+                        @error('regimen') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+            </section>
+
+            <section class="user-admin-form-section" aria-label="Representante">
+                <div class="user-admin-section-title">Representante</div>
+                <div class="user-admin-form-grid">
+                    <div>
+                        <label for="representative-name" class="eus-label eus-label-required">Nombre</label>
+                        <input id="representative-name" type="text" class="eus-input" wire:model.defer="name_representante">
+                        @error('name_representante') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label for="representative-last-name" class="eus-label eus-label-required">Apellido</label>
+                        <input id="representative-last-name" type="text" class="eus-input" wire:model.defer="last_name_representante">
+                        @error('last_name_representante') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="user-admin-form-wide">
+                        <label for="representative-cellphone" class="eus-label eus-label-required">Celular</label>
+                        <input id="representative-cellphone" type="text" class="eus-input" wire:model.defer="cellphone_representante" inputmode="tel">
+                        @error('cellphone_representante') <span class="eus-error">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="eus-modal-footer">
+            <button type="button" class="eus-btn eus-btn-secondary" wire:click="closeModal">
+                Cancelar
+            </button>
+            <button type="submit" class="eus-btn eus-btn-primary" wire:loading.attr="disabled" wire:target="store">
+                <span wire:loading.remove wire:target="store">{{ $from_create ? 'Guardar usuario' : 'Actualizar usuario' }}</span>
+                <span wire:loading wire:target="store">Guardando...</span>
+            </button>
+        </div>
+    </form>
 </div>

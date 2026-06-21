@@ -2432,6 +2432,116 @@ th.tabfont {
   flex-wrap: wrap;
 }
 
+.user-admin-page {
+  gap: 1.25rem;
+}
+
+.user-admin-card-header,
+.user-admin-header-actions {
+  gap: 1rem;
+}
+
+.user-admin-card-header {
+  align-items: flex-start;
+}
+
+.user-admin-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.user-admin-toolbar {
+  padding-block: 1rem;
+}
+
+.user-admin-filters {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1.4fr) minmax(12rem, 0.8fr) auto;
+  align-items: end;
+  gap: 1rem;
+}
+
+.user-admin-filter-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.user-admin-table {
+  min-width: 76rem;
+}
+
+.user-admin-table td {
+  vertical-align: middle;
+}
+
+.user-admin-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 14rem;
+}
+
+.user-admin-status-badge {
+  margin-top: 0.35rem;
+}
+
+.user-admin-payment-select {
+  margin-top: 0.5rem;
+  min-width: 10rem;
+}
+
+.user-admin-actions {
+  min-width: 14rem;
+}
+
+.user-admin-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-admin-empty-cell {
+  position: relative;
+}
+
+.user-admin-modal {
+  max-width: 48rem;
+}
+
+.user-admin-modal-copy {
+  margin-top: 0.25rem;
+}
+
+.user-admin-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.user-admin-form-section {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.user-admin-section-title {
+  color: var(--eus-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.user-admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.user-admin-form-wide {
+  grid-column: 1 / -1;
+}
+
 .date-token,
 .avatar-token {
   display: flex;
@@ -2833,6 +2943,34 @@ table[class*="datatable"] th {
 
   .attendance-filter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .user-admin-card-header,
+  .user-admin-header-actions,
+  .user-admin-filters,
+  .user-admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-admin-header-actions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .user-admin-card-header {
+    flex-direction: column;
+  }
+
+  .user-admin-filter-actions {
+    justify-content: flex-start;
+  }
+
+  .user-admin-empty-cell .eus-empty {
+    left: 0;
+    max-width: calc(100vw - 2rem);
+    position: sticky;
+    width: calc(100vw - 2rem);
   }
 
   .auth-actions-row,

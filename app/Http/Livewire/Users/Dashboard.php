@@ -44,7 +44,10 @@ class Dashboard extends Component
             default => 'Buenas noches',
         };
 
-        $stats = Cache::remember('dashboard.stats.' . Carbon::today()->toDateString(), now()->addMinutes(5), function () {
+        $today = Carbon::today();
+        $todayDate = $today->toDateString();
+
+        $stats = Cache::remember('dashboard.stats.' . $todayDate, now()->addMinutes(5), function () use ($today, $todayDate) {
             $studentCounts = User::query()
                 ->setEagerLoads([])
                 ->students()
@@ -54,8 +57,11 @@ class Dashboard extends Component
             return [
                 'totalStudents' => (int) ($studentCounts->total_students ?? 0),
                 'activeStudents' => (int) ($studentCounts->active_students ?? 0),
-                'todaySessions' => CourseSession::whereDate('date', Carbon::today())->count(),
-                'todayAttendances' => Attendance::whereDate('created_at', Carbon::today())->count(),
+                'todaySessions' => CourseSession::where('date', $todayDate)->count(),
+                'todayAttendances' => Attendance::whereBetween('created_at', [
+                    $today->copy()->startOfDay(),
+                    $today->copy()->endOfDay(),
+                ])->count(),
             ];
         });
 
@@ -64,11 +70,10 @@ class Dashboard extends Component
         $this->todaySessions = $stats['todaySessions'];
         $this->todayAttendances = $stats['todayAttendances'];
 
-        $this->upcomingSessions = Cache::remember('dashboard.upcoming_sessions.' . Carbon::today()->toDateString(), now()->addMinutes(5), function () {
+        $this->upcomingSessions = Cache::remember('dashboard.upcoming_sessions.' . $todayDate, now()->addMinutes(5), function () use ($todayDate) {
             return CourseSession::query()
                 ->select(['id', 'date', 'time', 'subject'])
-                ->whereDate('date', '>=', Carbon::today())
-                ->whereDate('date', '<=', Carbon::today()->addDays(7))
+                ->whereBetween('date', [$todayDate, Carbon::today()->addDays(7)->toDateString()])
                 ->orderBy('date')
                 ->orderBy('time')
                 ->take(6)

@@ -30,13 +30,7 @@
       <div class="container mx-auto mt-5 grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
         @foreach ($modulo as $drive)
         <div>
-
-          @livewire('components.u-i.card', [
-          'titulo' => $drive['materia'],
-          'imgurl' => $drive['img_url'],
-          'links' => $drive['links'],
-          'colorurl' => $drive['card_color'],
-          ])
+          @include('livewire.resources.partials.drive-card', ['drive' => $drive])
           {{--
           @livewire('components.u-i.card-single-class.card-single-class', [
           'titulo' => $drive['materia'],
@@ -85,7 +79,6 @@
     event.target.classList.add('border-b-2');
     event.target.classList.add('border-blue-500');
     let classString = event.target.getAttribute('data-target');
-    console.log('classString :>> ', classString);
     document.getElementById('panels').getElementsByClassName(classString)[0].classList.add("active2");
   }
 
@@ -94,7 +87,9 @@
   }
 
   // default tab
-  panel[0].classList.add('active2');
+  if (panel[0]) {
+    panel[0].classList.add('active2');
+  }
 </script>
 
 @endpush

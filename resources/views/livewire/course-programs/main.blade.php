@@ -27,7 +27,8 @@
                 @endforeach
             </select>
             @endcan
-        </div> 
+        </div>
+        @if($selected_course)
         <div  class="text-xl font-extrabold"><H1 style='text-align: center'>{{$selected_course->course_name}}</H1></div>
         <div class="py-2 px-4">
             <div>
@@ -159,6 +160,11 @@
                 @endcan
             </div>
         </div>
+        @else
+        <div class="py-8 px-4 text-sm text-gray-600">
+            No hay cursos configurados para mostrar.
+        </div>
+        @endif
     </div>
 
     <!-- formulario creacion de recursos -->
@@ -237,7 +243,6 @@
 
     function updateResourceJS(topicId) {
         var title = jQuery('#toUpdateTopicTitle-' + topicId).val();
-        console.log(title);
         window.livewire.emit('updateTopic', {
             topicId,
             title,
@@ -252,10 +257,13 @@
     }
 
     function setupDragAndDrop() {
+        if (typeof Sortable === 'undefined') {
+            return;
+        }
+
         let resourceLists = document.querySelectorAll('ul[id^="resources_list-"]');
 
         resourceLists.forEach((resource) => {
-            console.log('resource :>> ', resource);
             let listWithHandle = document.getElementById(resource.id);
 
             Sortable.create(listWithHandle, {
@@ -266,7 +274,6 @@
                     let orders = [];
                     // obtener el orden
                     for (let i = 0; i < evt.from.children.length; i++) {
-                        console.log('evt.from.children[i] :>> ', evt.from.children[i]);
                         orders.push({
                             resourceId: evt.from.children[i].dataset.resource_id,
                             order: i + 1

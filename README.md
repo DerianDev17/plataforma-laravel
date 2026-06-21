@@ -50,12 +50,13 @@ La logica del modelo `User` esta distribuida en traits por responsabilidad:
 | `HasRoles` | `app/Concerns/HasRoles.php` | Relacion con roles, `hasRole()`, `abilities()`, `assignRole()` |
 | `HasPayments` | `app/Concerns/HasPayments.php` | Constantes de pago, `adeuda()`, `canAccessLiveClasses()`, `diapago()`, normalizacion |
 | `HasIdentityValidation` | `app/Concerns/HasIdentityValidation.php` | Validacion de cedula, `getExamMonth()`, `hasCedulaPadre()` |
-| `ExcelStudentService` | `app/Services/ExcelStudentService.php` | Busqueda de usuarios en Excel (`findUserInExcel`) |
+| `UserRegistrationService` | `app/Services/Registration/UserRegistrationService.php` | Alta de usuarios, auditoria y notificacion de cuenta |
+| `NotificationService` | `app/Services/NotificationService.php` | Envio centralizado de credenciales temporales y recordatorios |
 | `User` (modelo) | `app/Models/User.php` | Relaciones ORM, scopes, `horario()`, configuracion del modelo |
 
 ### Metodos eliminados (dead code)
 
-- `findUserInExcel()` — movido a `ExcelStudentService`; ademas tenia un bug: `new UsersImport` se resolvia como `App\Models\UsersImport` en vez de `App\Imports\UsersImport`
+- `findUserInExcel()` - eliminado del registro web; la sincronizacion desde Excel debe vivir en un comando/servicio explicito, no en el alta de usuario
 - `getPaymentDeadlineExcel()`, `getStatusExcel()` — nunca llamados
 - `validatePhone()` — nunca llamado
 
@@ -101,6 +102,20 @@ Inicia el servidor de desarrollo:
 ```bash
 php artisan serve
 ```
+
+Para medir navegacion sin instrumentacion local, asegurese de tener Telescope apagado y reinicie el servidor:
+
+```bash
+TELESCOPE_ENABLED=false php artisan serve
+```
+
+En PowerShell:
+
+```powershell
+$env:TELESCOPE_ENABLED='false'; php artisan serve
+```
+
+Si quiere comparar tiempos cercanos a produccion, use tambien `APP_DEBUG=false` durante esa prueba.
 
 En otra terminal, para la landing (hot reload):
 
@@ -148,7 +163,7 @@ app/
 ├── Imports/            # Importaciones Excel (StudentsImport, StudentsImportar)
 ├── Models/             # Modelos Eloquent (User, Role, Ability, Course, etc.)
 ├── Providers/          # Service Providers (App, Auth, Fortify, Jetstream)
-├── Services/           # Servicios de dominio (LiveClass)
+├── Services/           # Servicios de dominio (Attendance, Audit, LiveClass, Payment, Registration, StudentImport, Zoom)
 └── View/Components/    # Componentes Blade (AppLayout, GuestLayout)
 config/                 # Configuraciones (fortify, jetstream, sanctum, livewire, etc.)
 database/
@@ -207,28 +222,25 @@ La app fue migrada incrementalmente de Laravel 8 a 11. Cambios estructurales rel
 
 ## Autenticacion Zoom
 
-La integracion con Zoom esta en proceso de migracion de JWT a OAuth Server-to-Server:
+La integracion con Zoom usa OAuth Server-to-Server para llamadas backend:
 
 | Componente | Autenticacion | Estado |
 |------------|--------------|--------|
 | `ZoomLiveClassProvider` | OAuth (`ZoomOAuthClient`) | Migrado |
-| `MeetingController` | JWT (`ZoomJWT`) | Por migrar |
-| `Meetings/Show` (Livewire) | JWT (`ZoomJWT`) | Por migrar |
-| Generacion de firma Web SDK | JWT (`generate_signature`) | Requiere JWT (client-side) |
+| `MeetingController` | OAuth (`ZoomOAuthClient`) | Migrado |
+| `Meetings/Show` (Livewire) | Sin cliente Zoom directo | Migrado |
 
-El trait `app/Traits/ZoomJWT.php` usa `api_key` + `api_secret` con JWT HS256 (deprecado por Zoom desde Junio 2023). El nuevo trait `app/Traits/ZoomOAuthClient.php` usa Server-to-Server OAuth con `client_id` + `client_secret` + `account_id`, con cache del token por 55 minutos.
+Ver mas detalles en [`docs/architecture.md`](docs/architecture.md).
+
+El cliente `app/Services/Zoom/ZoomOAuthClient.php` usa Server-to-Server OAuth con `client_id` + `client_secret` + `account_id`, con cache del token por 55 minutos.
 
 ### Variables de entorno requeridas
 
 ```env
-# Zoom OAuth (nuevo)
+# Zoom OAuth
 ZOOM_CLIENT_ID=
 ZOOM_CLIENT_SECRET=
 ZOOM_ACCOUNT_ID=
-
-# Zoom JWT (legacy, por migrar)
-ZOOM_API_KEY=
-ZOOM_API_SECRET=
 
 # Comun
 ZOOM_API_URL=https://api.zoom.us/v2/

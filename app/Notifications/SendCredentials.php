@@ -4,65 +4,45 @@ namespace App\Notifications;
 
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class SendCredentials extends Notification
 {
     use Queueable;
+
     public $user;
-    /**
-     * Create a new notification instance.
-     *
-     * @return void
-     */
-    public function __construct(User $user)
+    public $tempPassword;
+
+    public function __construct(User $user, ?string $tempPassword = null)
     {
         $this->user = $user;
+        $this->tempPassword = $tempPassword;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @param  mixed  $notifiable
-     * @return array
-     */
     public function via($notifiable)
     {
         return ['mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
-     */
     public function toMail($notifiable)
     {
-        $user_name = $this->user->username;
-        // dd($this->user->username);
-        return (new MailMessage)
-            ->line('¡Hola! Bienvenido/a a Semilla Digital.')
-            ->line('Gracias por registrarte en la plataforma virtual de Semilla Digital, desde ahora podrás vivir la mejor experiencia en educación virtual. ')
+        $message = (new MailMessage)
+            ->line('Hola. Bienvenido/a a Semilla Digital.')
             ->line('Debe acceder con los siguientes datos:')
-            ->line('Nombre de usuario:'.' '.$user_name)
-            ->line('Contraseña:'.' '.$user_name)
-            // ->action('Notification Action', url('/'))
-            ->line('¡Nosotros te ayudamos a cumplir tus sueños!');
+            ->line('Nombre de usuario: ' . $this->user->username);
+
+        if ($this->tempPassword) {
+            $message->line('Contrasena temporal: ' . $this->tempPassword);
+        } else {
+            $message->line('Su contrasena actual no cambia. Si no la recuerda, use la recuperacion de contrasena.');
+        }
+
+        return $message->line('Semilla Digital.');
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return array
-     */
     public function toArray($notifiable)
     {
-        return [
-            //
-        ];
+        return [];
     }
 }

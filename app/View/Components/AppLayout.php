@@ -93,6 +93,7 @@ class AppLayout extends Component
 
     public function render()
     {
+        auth()->user()?->loadMissing('roles.abilities', 'student_group');
         $this->today_sessions = $this->getTodaySessions();
         return view('layouts.admin', [
             'today_sessions' => $this->today_sessions,

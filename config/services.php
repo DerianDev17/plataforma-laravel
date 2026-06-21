@@ -35,8 +35,6 @@ return [
     ],
 
     'zoom' => [
-        'api_key' => env('ZOOM_API_KEY', ''),
-        'api_secret' => env('ZOOM_API_SECRET', ''),
         'api_url' => env('ZOOM_API_URL', ''),
         'account_id' => env('ZOOM_ACCOUNT_ID', ''),
         'client_id' => env('ZOOM_CLIENT_ID', ''),

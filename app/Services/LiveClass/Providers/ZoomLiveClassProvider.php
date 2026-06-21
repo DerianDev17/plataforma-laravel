@@ -7,13 +7,13 @@ use App\Models\User;
 use App\Services\LiveClass\Contracts\LiveClassProvider;
 use App\Services\LiveClass\LiveClassOperationResult;
 use App\Services\LiveClass\LiveClassSyncResult;
-use App\Traits\ZoomOAuthClient;
+use App\Services\Zoom\ZoomOAuthClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Log;
 
 class ZoomLiveClassProvider implements LiveClassProvider
 {
-    use ZoomOAuthClient;
+    public function __construct(private ZoomOAuthClient $zoom) {}
 
     public function label(): string
     {
@@ -31,7 +31,7 @@ class ZoomLiveClassProvider implements LiveClassProvider
         $webinarId = $student->student_group->webinar_id;
 
         try {
-            $response = $this->zoomPost('webinars/' . $webinarId . '/registrants', [
+            $response = $this->zoom->post('webinars/' . $webinarId . '/registrants', [
                 'email' => $student->email,
                 'first_name' => $student->name,
                 'last_name' => $student->last_name,
@@ -109,7 +109,7 @@ class ZoomLiveClassProvider implements LiveClassProvider
             $path .= '?occurrence_id=' . urlencode($occurrenceId);
         }
 
-        return $this->zoomPut($path, [
+        return $this->zoom->put($path, [
             'action' => 'approve',
             'registrants' => [[
                 'id' => $registrantId,
@@ -121,7 +121,7 @@ class ZoomLiveClassProvider implements LiveClassProvider
     private function currentOccurrenceId(string $webinarId): ?string
     {
         try {
-            $response = $this->zoomGet('webinars/' . $webinarId, ['show_previous_occurrences' => false]);
+            $response = $this->zoom->get('webinars/' . $webinarId, ['show_previous_occurrences' => false]);
 
             if ($response->failed()) {
                 return null;
@@ -198,7 +198,7 @@ class ZoomLiveClassProvider implements LiveClassProvider
                 $params['next_page_token'] = $nextPageToken;
             }
 
-            $response = $this->zoomGet('webinars/' . $webinarId . '/registrants', $params);
+            $response = $this->zoom->get('webinars/' . $webinarId . '/registrants', $params);
 
             if ($response->failed()) {
                 throw new \RuntimeException($this->responseMessage($response));

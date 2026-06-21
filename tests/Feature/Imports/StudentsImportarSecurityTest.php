@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Imports;
 
-use App\Actions\Fortify\UpdateUserPassword;
+use App\Imports\AccountsImport;
 use App\Imports\StudentsImportar;
 use App\Mail\RegistrationMail;
 use App\Models\StudentGroup;
 use App\Models\User;
+use App\Services\StudentImport\StudentImportResult;
+use App\Services\StudentImport\StudentImportService;
 use Database\Seeders\PermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -31,6 +33,11 @@ class StudentsImportarSecurityTest extends TestCase
                 $table->boolean('enviarCorreo')->default(false);
             });
         }
+    }
+
+    private function importer(bool $delete = false): StudentsImportar
+    {
+        return new StudentsImportar($delete);
     }
 
     private function validRow(string $email = 'student@test.com'): array
@@ -58,12 +65,21 @@ class StudentsImportarSecurityTest extends TestCase
     }
 
     /** @test */
+    public function importers_can_be_constructed_with_legacy_arguments()
+    {
+        $studentsImport = new StudentsImportar(false);
+
+        $this->assertInstanceOf(AccountsImport::class, new AccountsImport);
+        $this->assertInstanceOf(StudentsImportar::class, $studentsImport);
+        $this->assertSame(0, $studentsImport->getRowCount());
+    }
+
+    /** @test */
     public function import_creates_user_with_random_password_not_equal_to_username()
     {
         Mail::fake();
 
-        $import = new StudentsImportar(false);
-        $import->collection(collect([$this->validRow()]));
+        $this->importer(false)->collection(collect([$this->validRow()]));
 
         $user = User::where('email', 'student@test.com')->firstOrFail();
 
@@ -76,8 +92,7 @@ class StudentsImportarSecurityTest extends TestCase
     {
         Mail::fake();
 
-        $import = new StudentsImportar(false);
-        $import->collection(collect([$this->validRow()]));
+        $this->importer(false)->collection(collect([$this->validRow()]));
 
         $user = User::where('email', 'student@test.com')->firstOrFail();
 
@@ -89,8 +104,7 @@ class StudentsImportarSecurityTest extends TestCase
     {
         Mail::fake();
 
-        $import = new StudentsImportar(false);
-        $import->collection(collect([$this->validRow()]));
+        $this->importer(false)->collection(collect([$this->validRow()]));
 
         $user = User::where('email', 'student@test.com')->firstOrFail();
 
@@ -103,8 +117,7 @@ class StudentsImportarSecurityTest extends TestCase
     {
         Mail::fake();
 
-        $import = new StudentsImportar(false);
-        $import->collection(collect([$this->validRow()]));
+        $this->importer(false)->collection(collect([$this->validRow()]));
 
         $user = User::where('email', 'student@test.com')->firstOrFail();
 
@@ -127,7 +140,7 @@ class StudentsImportarSecurityTest extends TestCase
             'must_change_password' => true,
         ]);
 
-        (new UpdateUserPassword)->update($user, [
+        (new \App\Actions\Fortify\UpdateUserPassword)->update($user, [
             'password' => 'new-strong-pass-9876',
             'password_confirmation' => 'new-strong-pass-9876',
         ]);
@@ -146,7 +159,7 @@ class StudentsImportarSecurityTest extends TestCase
             'must_change_password' => true,
         ]);
 
-        (new UpdateUserPassword)->update($user, [
+        (new \App\Actions\Fortify\UpdateUserPassword)->update($user, [
             'password' => 'new-strong-pass-9876',
             'password_confirmation' => 'new-strong-pass-9876',
         ]);
@@ -164,7 +177,7 @@ class StudentsImportarSecurityTest extends TestCase
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
-        (new UpdateUserPassword)->update($user, [
+        (new \App\Actions\Fortify\UpdateUserPassword)->update($user, [
             'password' => 'new-strong-pass-9876',
             'password_confirmation' => 'new-strong-pass-9876',
         ]);
@@ -175,8 +188,7 @@ class StudentsImportarSecurityTest extends TestCase
     {
         Mail::fake();
 
-        $import = new StudentsImportar(false);
-        $import->collection(collect([$this->validRow()]));
+        $this->importer(false)->collection(collect([$this->validRow()]));
 
         $user = User::where('email', 'student@test.com')->firstOrFail();
 
@@ -193,8 +205,7 @@ class StudentsImportarSecurityTest extends TestCase
         ]);
         $existing->assignRole('student');
 
-        $import = new StudentsImportar(true);
-        $import->borrarEstudiantes(collect([$this->validRow('new@test.com')]));
+        $this->importer(true)->borrarEstudiantes(collect([$this->validRow('new@test.com')]));
 
         $this->assertNotNull($existing->fresh()->deleted_at);
         $this->assertNotNull(User::withTrashed()->find($existing->id));
@@ -210,8 +221,7 @@ class StudentsImportarSecurityTest extends TestCase
         ]);
         $admin->assignRole('superadmin');
 
-        $import = new StudentsImportar(true);
-        $import->borrarEstudiantes(collect([$this->validRow('new@test.com')]));
+        $this->importer(true)->borrarEstudiantes(collect([$this->validRow('new@test.com')]));
 
         $this->assertNull($admin->fresh()->deleted_at);
     }
@@ -230,13 +240,38 @@ class StudentsImportarSecurityTest extends TestCase
 
         $this->assertNotNull($ghost->fresh()->deleted_at);
 
-        $import = new StudentsImportar(false);
-        $import->collection(collect([$this->validRow('student@test.com')]));
+        $this->importer(false)->collection(collect([$this->validRow('student@test.com')]));
 
         $active = User::where('email', 'student@test.com')->first();
 
         $this->assertNotNull($active);
         $this->assertNull($active->deleted_at);
         $this->assertNull(User::withTrashed()->find($ghost->id));
+    }
+
+    /** @test */
+    public function service_returns_a_summary_with_created_updated_deleted_counts()
+    {
+        Mail::fake();
+
+        $existing = User::factory()->create([
+            'email' => 'existing@test.com',
+            'name' => 'Existing',
+            'last_name' => 'Student',
+        ]);
+        $existing->assignRole('student');
+
+        $result = app(StudentImportService::class)->import(
+            collect([
+                $this->validRow('new@test.com'),
+                $this->validRow('existing@test.com'),
+            ]),
+            ['delete_missing' => false, 'send_emails' => true]
+        );
+
+        $this->assertInstanceOf(StudentImportResult::class, $result);
+        $this->assertSame(1, $result->created());
+        $this->assertSame(1, $result->updated());
+        $this->assertSame(0, $result->deleted());
     }
 }

@@ -37,10 +37,13 @@ class Show extends Component
     {
         $this->authorizeAbility('edit_users');
 
-        $searchTerm = '%' . $this->searchTerm . '%';
+        $searchTerm = trim((string) $this->searchTerm);
+
         return view('livewire.sesiones.show', [
             'sesiones' => CourseSession::orderBy('date', 'asc')
-                ->where('date', 'like', $searchTerm)
+                ->when($searchTerm !== '', function ($query) use ($searchTerm): void {
+                    $query->where('date', 'like', '%' . $searchTerm . '%');
+                })
                 ->paginate(20),
         ]);
     }

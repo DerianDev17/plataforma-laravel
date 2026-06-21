@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseSession;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -15,7 +16,7 @@ class UserController extends Controller
         return back()->with('message', 'Usuario eliminado.');
     }
 
-    public function enviarCorreoCuentas()
+    public function enviarCorreoCuentas(NotificationService $notifications)
     {
         set_time_limit(0);
 
@@ -27,12 +28,7 @@ class UserController extends Controller
         $counter = 0;
 
         foreach ($users as $f) {
-            if (filter_var($f->email, FILTER_VALIDATE_EMAIL)) {
-                \Mail::to($f->email)->send(new \App\Mail\RegistrationMail([
-                    'title' => 'Creacion de cuenta Semilla Digital',
-                    'body' => 'Saludos desde ',
-                    'user' => $f,
-                ]));
+            if ($notifications->sendRegistrationCredentials($f)) {
                 $counter++;
             }
             usleep(250000);

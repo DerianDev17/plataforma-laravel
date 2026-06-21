@@ -94,6 +94,13 @@ class Main extends Component
     private function selectedCourseRelations(): array
     {
         return [
+            'topics.resources' => function ($query) {
+                if ($this->selected_group_id) {
+                    $query->where('student_groups_id', $this->selected_group_id);
+                }
+
+                $query->orderBy('order');
+            },
             'topics.resources.resource_url',
             'topics.resources.resource_file',
         ];
@@ -101,8 +108,8 @@ class Main extends Component
 
     private function loadSelectedCourse($courseId): void
     {
-        $this->selected_course = CourseProgram::with($this->selectedCourseRelations())->findOrFail($courseId);
-        $this->selected_course_id = $this->selected_course->id;
+        $this->selected_course = CourseProgram::with($this->selectedCourseRelations())->find($courseId);
+        $this->selected_course_id = $this->selected_course?->id;
     }
 
     public function mount()
@@ -114,19 +121,22 @@ class Main extends Component
         $this->curr_user->loadMissing('student_group');
 
         // los cursos son las materias que se dictan
-        $this->courses = CourseProgram::all();
+        $this->courses = CourseProgram::query()
+            ->select('id', 'course_name')
+            ->orderBy('course_name')
+            ->get();
 
         // seleccionar el curso que se mostrará por defecto
-        if ($this->courses->isNotEmpty()) {
-            $this->loadSelectedCourse($this->courses->first()->id);
-        }
-
-        $this->student_groups = StudentGroup::valids()->get();
+        $this->student_groups = StudentGroup::valids()
+            ->select('id', 'code')
+            ->get();
 
         // establecer el valor delselect con el id del paralelo del estudiante logueado
         $this->setSelectedStudentGroupId();
 
-        $this->filterResources();
+        if ($this->courses->isNotEmpty()) {
+            $this->loadSelectedCourse($this->courses->first()->id);
+        }
 
         // emitir evento para inicializarr el js que habilita el drag and drop
         // $this->emit('selectHasChanged');
@@ -158,6 +168,10 @@ class Main extends Component
         if ($this->new_topic_title == '') {
             return;
         }
+        if (! $this->selected_course) {
+            return;
+        }
+
         $topic = new CourseProgramTopic;
         $topic->course_program_id = $this->selected_course->id;
         $topic->topic_title = $this->new_topic_title;
@@ -377,20 +391,7 @@ class Main extends Component
 
     public function filterResources()
     {
-        if (!$this->selected_course || !$this->selected_group_id) {
-            return;
-        }
-
-        // filtrar recursos de paralelo especifico
-        foreach ($this->selected_course->topics as $topic) {
-            // dd($topic->resources);
-            $topic->setRelation('resources', $topic->resources
-                ->filter(function ($resc) {
-                    return $resc->student_groups_id == $this->selected_group_id;
-                })
-                ->sortBy('order')
-                ->values());
-        }
+        //
     }
 
     public function refreshData()
@@ -402,8 +403,6 @@ class Main extends Component
         }
 
         $this->loadSelectedCourse($courseId);
-        // dd($this->selected_course);
-        $this->filterResources();
     }
 
     public function deleteResource($resource_id)
@@ -437,7 +436,6 @@ class Main extends Component
     {
         $this->authorizeCourseProgramRead();
 
-        $this->refreshData();
         return view('livewire.course-programs.main');
     }
 }

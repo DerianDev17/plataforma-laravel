@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Reunion;
 use App\Models\StudentGroup;
 use App\Models\User;
+use App\Services\Zoom\ZoomOAuthClient;
 use Illuminate\Http\Request;
-use App\Traits\ZoomJWT;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Gate;
@@ -15,21 +15,21 @@ use Illuminate\Support\Facades\Gate;
 
 class MeetingController extends Controller
 {
-    use ZoomJWT;
-
     const MEETING_TYPE_INSTANT = 1;
     const MEETING_TYPE_SCHEDULE = 2;
     const MEETING_TYPE_RECURRING = 3;
     const MEETING_TYPE_FIXED_RECURRING_FIXED = 8;
 
+    public function __construct(private ZoomOAuthClient $zoom) {}
+
     public function list(Request $request)
     {
         $path = 'users/me/meetings';
-        $response = $this->zoomGet($path);
+        $response = $this->zoom->get($path);
 
         $data = json_decode($response->body(), true);
         $data['meetings'] = array_map(function (&$m) {
-            $m['start_at'] = $this->toUnixTimeStamp($m['start_time'], $m['timezone']);
+            $m['start_at'] = $this->zoom->toUnixTimeStamp($m['start_time'], $m['timezone']);
             return $m;
         }, $data['meetings']);
 
@@ -57,10 +57,10 @@ class MeetingController extends Controller
         $data = $validator->validated();
 
         $path = 'users/me/meetings';
-        $response = $this->zoomPost($path, [
+        $response = $this->zoom->post($path, [
             'topic' => $data['topic'],
             'type' => self::MEETING_TYPE_SCHEDULE,
-            'start_time' => $this->toZoomTimeFormat($data['start_time']),
+            'start_time' => $this->zoom->toZoomTimeFormat($data['start_time']),
             'duration' => 30,
             'agenda' => $data['agenda'] ?? '',
             'settings' => [
@@ -80,11 +80,11 @@ class MeetingController extends Controller
     public function get(Request $request, string $id)
     {
         $path = 'meetings/' . $id;
-        $response = $this->zoomGet($path);
+        $response = $this->zoom->get($path);
 
         $data = json_decode($response->body(), true);
         if ($response->ok()) {
-            $data['start_at'] = $this->toUnixTimeStamp($data['start_time'], $data['timezone']);
+            $data['start_at'] = $this->zoom->toUnixTimeStamp($data['start_time'], $data['timezone']);
         }
 
         return [
@@ -110,7 +110,7 @@ class MeetingController extends Controller
         $data = $validator->validated();
 
         $path = 'meetings/' . $id;
-        $response = $this->zoomPatch($path, [
+        $response = $this->zoom->patch($path, [
             'topic' => $data['topic'],
             'type' => self::MEETING_TYPE_SCHEDULE,
             'start_time' => (new \DateTime($data['start_time']))->format('Y-m-d\TH:i:s'),
@@ -132,7 +132,7 @@ class MeetingController extends Controller
     public function delete(Request $request, string $id)
     {
         $path = 'meetings/' . $id;
-        $response = $this->zoomDelete($path);
+        $response = $this->zoom->delete($path);
 
         return [
             'success' => $response->status() === 204,
@@ -159,7 +159,7 @@ class MeetingController extends Controller
 
         try {
             $path = 'webinars/' . $data['meeting_id'] . '/registrants';
-            $this->zoomPost($path, [
+            $this->zoom->post($path, [
                 'email' => $data['email'],
                 'first_name' => $data['name'],
                 'last_name' => $data['name'],
@@ -177,7 +177,7 @@ class MeetingController extends Controller
     {
         try {
             $path = 'webinars/' . $meeting_id;
-            $response = $this->zoomPatch($path, [
+            $response = $this->zoom->patch($path, [
                 'settings' => ['approval_type' => $type],
             ]);
 
@@ -211,7 +211,7 @@ class MeetingController extends Controller
     {
         try {
             $path = 'webinars/' . $meeting_number . '/registrants/status';
-            return $this->zoomPut($path, [
+            return $this->zoom->put($path, [
                 'action' => 'deny',
                 'registrants' => $registrants,
                 'occurrence_id' => '1623441600000',
@@ -312,7 +312,7 @@ class MeetingController extends Controller
         try {
             $path = 'webinars/' . $webinar_id . '/registrants';
 
-            return $this->zoomPost($path, [
+            return $this->zoom->post($path, [
                 'email' => $student->email,
                 'first_name' => $student->name,
                 'last_name' => $student->last_name,
@@ -333,7 +333,7 @@ class MeetingController extends Controller
             'status' => $status
         ];
         try {
-            $response = $this->zoomGet($path, $params);
+            $response = $this->zoom->get($path, $params);
 
             $registrants = $response->json()['registrants'] ?? [];
 
@@ -341,7 +341,7 @@ class MeetingController extends Controller
                 $next_page_token = $response->json()['next_page_token'];
 
                 while ($next_page_token) {
-                    $response = $this->zoomGet($path, [
+                    $response = $this->zoom->get($path, [
                         'page_size' => 300,
                         'status' => $status,
                         'next_page_token' => $next_page_token,
@@ -398,7 +398,7 @@ class MeetingController extends Controller
             $occurrence_id = $this->getCurrentOccurrenceId($meeting_number);
             $path = 'webinars/' . $meeting_number . '/registrants/status?occurrence_id=' . $occurrence_id;
 
-            return $this->zoomPut($path, [
+            return $this->zoom->put($path, [
                 'action' => 'approve',
                 'registrants' => $registrants,
             ]);
@@ -412,7 +412,7 @@ class MeetingController extends Controller
     {
         try {
             $path = 'webinars/' . $meeting_number;
-            $response = $this->zoomGet($path, ['show_previous_occurrences' => false]);
+            $response = $this->zoom->get($path, ['show_previous_occurrences' => false]);
 
             if ($response->json()['occurrences']) {
                 return $response->json()['occurrences'][0]['occurrence_id'];

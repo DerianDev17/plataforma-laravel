@@ -7,6 +7,7 @@ use App\Http\Livewire\Concerns\AuthorizesLivewireActions;
 use App\Models\Attendance;
 use App\Models\CourseSession;
 use App\Models\User;
+use App\Services\Attendance\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
@@ -74,7 +75,7 @@ class Show extends Component
             })
             ->when($this->date, function ($query): void {
                 $query->whereHas('courseSession', function ($sessionQuery): void {
-                    $sessionQuery->whereDate('date', $this->date);
+                    $sessionQuery->where('date', $this->date);
                 });
             })
             ->when($this->sessionFilter, function ($query): void {
@@ -105,32 +106,33 @@ class Show extends Component
             'formCourseSessionId' => 'clase',
         ]);
 
-        $exists = Attendance::where('user_id', $this->formUserId)
-            ->where('course_session_id', $this->formCourseSessionId)
-            ->exists();
+        $student = User::find($this->formUserId);
+        $session = CourseSession::find($this->formCourseSessionId);
+        $marker = auth()->user();
 
-        if ($exists) {
-            $this->addError('formCourseSessionId', 'Este estudiante ya tiene asistencia registrada para esa clase.');
+        $result = app(AttendanceService::class)->markAttendanceManually($student, $session, $marker);
+
+        if ($result->denied() && ! $result->alreadyRegistered()) {
+            $this->addError('formCourseSessionId', $result->message());
             return;
         }
 
-        Attendance::create([
-            'user_id' => $this->formUserId,
-            'course_session_id' => $this->formCourseSessionId,
-        ]);
-
-        $this->clearAttendanceStatsCache();
+        if ($result->alreadyRegistered()) {
+            $this->addError('formCourseSessionId', $result->message());
+            return;
+        }
 
         $this->reset(['formUserId', 'formCourseSessionId']);
-        session()->flash('message', 'Asistencia registrada correctamente.');
+        session()->flash('message', $result->message());
     }
 
     public function delete(int $attendanceId): void
     {
         $this->authorizeAbility('edit_users');
 
-        Attendance::findOrFail($attendanceId)->delete();
-        $this->clearAttendanceStatsCache();
+        $attendance = Attendance::findOrFail($attendanceId);
+        app(AttendanceService::class)->revokeAttendance($attendance, auth()->user());
+
         session()->flash('message', 'Asistencia eliminada correctamente.');
     }
 
@@ -191,9 +193,14 @@ class Show extends Component
     private function attendanceStats(): array
     {
         return Cache::remember($this->attendanceStatsCacheKey(), now()->addMinutes(5), function (): array {
+            $today = Carbon::today();
+
             return [
                 'total' => Attendance::count(),
-                'today' => Attendance::whereDate('created_at', Carbon::today())->count(),
+                'today' => Attendance::whereBetween('created_at', [
+                    $today->copy()->startOfDay(),
+                    $today->copy()->endOfDay(),
+                ])->count(),
                 'students' => Attendance::distinct('user_id')->count('user_id'),
                 'sessions' => Attendance::distinct('course_session_id')->count('course_session_id'),
             ];

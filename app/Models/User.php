@@ -75,10 +75,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_photo_url',
     ];
 
-    protected $with = [
-        'roles',
-    ];
-
     public function course_sessions()
     {
         return $this->belongsToMany(CourseSession::class, 'attendances');
@@ -109,7 +105,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function scopeWithLiveClassPaymentAccess($query)
     {
         return $query->where(function ($query) {
-            $query->whereIn('payment_status', self::LIVE_CLASS_PAYMENT_STATUSES)
+            $query->whereIn('payment_status', \App\Services\Payment\PaymentAccessService::ACCESS_STATUSES)
                 ->orWhere(function ($query) {
                     $query->whereNull('payment_status')
                         ->where('status', 1);

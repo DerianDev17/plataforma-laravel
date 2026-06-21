@@ -2,9 +2,8 @@
 
 namespace App\Http\Livewire\Resources;
 
-use App\Models\Course;
 use App\Models\Drive;
-use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class Show extends Component
@@ -52,6 +51,7 @@ class Show extends Component
     public function mount()
     {
         $this->user = auth()->user();
+        $this->user?->loadMissing('student_group');
         // dd($this->user);
 
     }
@@ -84,11 +84,15 @@ class Show extends Component
             $new_drives['Modulo ' . strval($i + 1)] = [];
         }
         foreach ($drives as $key => $drive) {
-            array_push($new_drives[$drive->modulo], [
-                'materia' => $this->changeSubject($drive->materia),
-                'links' => json_decode($drive->links),
-                'img_url' => $this->imgs_urls[$drive->materia],
-                'card_color' => $this->card_colors[$drive->materia],
+            $modulo = is_array($drive) ? $drive['modulo'] : $drive->modulo;
+            $materia = is_array($drive) ? $drive['materia'] : $drive->materia;
+            $links = is_array($drive) ? $drive['links'] : json_decode($drive->links, true);
+
+            array_push($new_drives[$modulo], [
+                'materia' => $this->changeSubject($materia),
+                'links' => $links ?: [],
+                'img_url' => $this->imgs_urls[$materia] ?? '',
+                'card_color' => $this->card_colors[$materia] ?? 'bg-gray-200',
             ]);
         }
 
@@ -97,8 +101,8 @@ class Show extends Component
 
     public function render()
     {
-        $user = auth()->user();
-        $student_group_id = $user->student_group->id ?? null;
+        $user = $this->user ?: auth()->user();
+        $student_group_id = $user?->student_group_id;
 
         if (!$student_group_id) {
             $this->drives = $this->construirArrayDrives(collect());
@@ -107,27 +111,25 @@ class Show extends Component
             return view('livewire.resources.show');
         }
 
-        $drives = Drive::where('course_id', $student_group_id)
-            ->orderBy('modulo')
-            ->get()
-            ->groupBy('materia')
-            ->map(function ($group, $materia) {
-                return [
-                    'modulo' => $group->first()->modulo,
-                    'materia' => $materia,
-                    'course_id' => $group->first()->course_id,
-                    'links' => $group->pluck('link')->toJson(),
-                ];
-            })
-            ->values();
+        $drives = Cache::remember('resources.drives.group.' . $student_group_id, now()->addMinutes(10), function () use ($student_group_id) {
+            return Drive::where('course_id', $student_group_id)
+                ->orderBy('modulo')
+                ->get()
+                ->groupBy('materia')
+                ->map(function ($group, $materia) {
+                    return [
+                        'modulo' => $group->first()->modulo,
+                        'materia' => $materia,
+                        'course_id' => $group->first()->course_id,
+                        'links' => $group->pluck('link')->values()->all(),
+                    ];
+                })
+                ->values();
+        });
         // dd($drives);
         $this->drives = $this->construirArrayDrives($drives);
 
-        
-        if ($student_group_id == 4)
-        {
-            $this->n_modules = 2;
-        }
+        $this->n_modules = $student_group_id == 4 ? 2 : 0;
         
         return view('livewire.resources.show');
     }

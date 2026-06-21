@@ -43,6 +43,8 @@ trait HasRoles
 
     public function hasRole($role)
     {
+        $this->loadMissing('roles');
+
         if (is_string($role)) {
             return $this->roles->contains('name', $role);
         }
