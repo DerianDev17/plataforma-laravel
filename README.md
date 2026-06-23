@@ -9,7 +9,7 @@ Plataforma educativa construida sobre Laravel, disenada para la gestion academic
 
 ## Stack
 
-- **Backend**: Laravel 11, PHP `^8.2`, MySQL
+- **Backend**: Laravel 12, PHP `^8.2`, MySQL
 - **Autenticacion**: Jetstream 5 + Fortify + Sanctum 4 (login por `username`, verificacion de email)
 - **Frontend autenticado**: Blade + Livewire 3 + `public/css/modern.css`
 - **Landing publica**: Astro 6 + Tailwind CSS 4 (`resources/astro/src/`)
@@ -32,6 +32,7 @@ Plataforma educativa construida sobre Laravel, disenada para la gestion academic
 - Generacion de certificados PDF
 - Envio masivo de correos de cuentas
 - Contactos de estudiantes
+- Centro de operaciones con historial auditable de cambios criticos
 
 ## Requisitos
 

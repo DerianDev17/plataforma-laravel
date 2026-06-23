@@ -6,15 +6,15 @@ use App\Http\Livewire\Concerns\AuthorizesLivewireActions;
 use App\Models\CourseSession;
 use App\Models\StudentGroup;
 use App\Models\Subject;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Livewire\Component;
-
 use Livewire\WithPagination;
-
 
 class Show extends Component
 {
-    use WithPagination;
     use AuthorizesLivewireActions;
+    use WithPagination;
 
     public $course_id;
     public $student_groups_id;
@@ -22,9 +22,7 @@ class Show extends Component
     public $time;
     public $subject;
     public $module_number;
-
     public $datetime;
-
     public $session_id;
     public $user;
     public $isOpen = 0;
@@ -33,22 +31,7 @@ class Show extends Component
     public $subjects = [];
     public $student_groups = [];
 
-    public function render()
-    {
-        $this->authorizeAbility('edit_users');
-
-        $searchTerm = trim((string) $this->searchTerm);
-
-        return view('livewire.sesiones.show', [
-            'sesiones' => CourseSession::orderBy('date', 'asc')
-                ->when($searchTerm !== '', function ($query) use ($searchTerm): void {
-                    $query->where('date', 'like', '%' . $searchTerm . '%');
-                })
-                ->paginate(20),
-        ]);
-    }
-
-    public function mount()
+    public function mount(): void
     {
         $this->authorizeAbility('edit_users');
 
@@ -56,7 +39,37 @@ class Show extends Component
         $this->student_groups = StudentGroup::all();
     }
 
-    public function create()
+    public function render()
+    {
+        $this->authorizeAbility('edit_users');
+
+        $searchTerm = trim((string) $this->searchTerm);
+
+        return view('livewire.sesiones.show', [
+            'sesiones' => CourseSession::query()
+                ->with('student_group:id,code,name')
+                ->orderBy('date', 'asc')
+                ->orderBy('time', 'asc')
+                ->when($searchTerm !== '', function (Builder $query) use ($searchTerm): void {
+                    $query->where(function (Builder $query) use ($searchTerm): void {
+                        $likeSearch = '%' . $searchTerm . '%';
+
+                        $query->where('date', 'like', $likeSearch)
+                            ->orWhere('time', 'like', $likeSearch)
+                            ->orWhere('subject', 'like', $likeSearch)
+                            ->orWhere('module_number', 'like', $likeSearch)
+                            ->orWhereHas('student_group', function (Builder $groupQuery) use ($likeSearch): void {
+                                $groupQuery->where('code', 'like', $likeSearch)
+                                    ->orWhere('name', 'like', $likeSearch);
+                            });
+                    });
+                })
+                ->paginate(20),
+            'stats' => $this->sessionStats(),
+        ]);
+    }
+
+    public function create(): void
     {
         $this->authorizeAbility('edit_users');
 
@@ -64,7 +77,7 @@ class Show extends Component
         $this->openModal();
     }
 
-    public function openModal()
+    public function openModal(): void
     {
         $this->isOpen = true;
         $this->resetErrorBag();
@@ -72,32 +85,26 @@ class Show extends Component
         $this->dispatch('modalOpened');
     }
 
-    public function closeModal()
+    public function closeModal(): void
     {
         $this->isOpen = false;
     }
 
-    private function resetInputFields()
+    public function updatingSearchTerm(): void
     {
-        $this->course_id = '';
-        $this->student_groups_id = '';
-        $this->date = '';
-        $this->time = '';
-        $this->subject = '';
-        $this->module_number = '';
-        $this->session_id = '';
-        $this->datetime = '';
+        $this->resetPage();
     }
 
-    public function store()
+    public function store(): void
     {
         $this->authorizeAbility('edit_users');
 
-        $this->date = explode(' ', $this->datetime)[0];
-        $this->time = explode(' ', $this->datetime)[1];
+        $dateTimeParts = preg_split('/\s+/', trim((string) $this->datetime), 2);
+        $this->date = $dateTimeParts[0] ?? '';
+        $this->time = $dateTimeParts[1] ?? '';
 
         $this->validate([
-            // 'modulo' => 'required|unique:sessions,modulo,' . $this->attendance_id, // para poder actualizar
+            'datetime' => 'required',
             'student_groups_id' => 'required',
             'date' => 'required',
             'time' => 'required',
@@ -105,22 +112,23 @@ class Show extends Component
             'module_number' => 'required',
         ]);
 
-        $data = array(
+        CourseSession::updateOrCreate(['id' => $this->session_id], [
+            'course_id' => $this->student_groups_id,
             'student_groups_id' => $this->student_groups_id,
             'date' => $this->date,
             'time' => $this->time,
             'subject' => $this->subject,
             'module_number' => $this->module_number,
-        );
+        ]);
 
-        $session = CourseSession::updateOrCreate(['id' => $this->session_id], $data);
-        session()->flash('message', $this->session_id ? 'Sesión actualizada correctamente.' : 'Sesión creada correctamente.');
+        session()->flash('message', $this->session_id ? 'Sesion actualizada correctamente.' : 'Sesion creada correctamente.');
 
         $this->closeModal();
         $this->resetInputFields();
+        $this->resetPage();
     }
 
-    public function edit($id)
+    public function edit($id): void
     {
         $this->authorizeAbility('edit_users');
 
@@ -138,12 +146,36 @@ class Show extends Component
         $this->openModal();
     }
 
-    public function delete($id)
+    public function delete($id): void
     {
         $this->authorizeAbility('edit_users');
 
         $this->session_id = $id;
         CourseSession::findOrFail($id)->delete();
-        session()->flash('message', 'Sesión eliminada correctamente.');
+        session()->flash('message', 'Sesion eliminada correctamente.');
+    }
+
+    private function resetInputFields(): void
+    {
+        $this->course_id = '';
+        $this->student_groups_id = '';
+        $this->date = '';
+        $this->time = '';
+        $this->subject = '';
+        $this->module_number = '';
+        $this->session_id = '';
+        $this->datetime = '';
+    }
+
+    private function sessionStats(): array
+    {
+        $today = Carbon::today()->toDateString();
+
+        return [
+            'total' => CourseSession::count(),
+            'today' => CourseSession::whereDate('date', $today)->count(),
+            'upcoming' => CourseSession::whereDate('date', '>=', $today)->count(),
+            'groups' => CourseSession::whereNotNull('student_groups_id')->distinct('student_groups_id')->count('student_groups_id'),
+        ];
     }
 }

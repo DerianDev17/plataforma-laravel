@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\User;
+use App\Services\Audit\AuditLogService;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\WithStartRow;
@@ -11,6 +12,9 @@ class StudentsImport implements ToCollection, WithStartRow
 {
     private $rows = 0;
     private $failed_updates = [];
+    private int $updated = 0;
+
+    public function __construct(private ?User $actor = null) {}
 
     public function collection(Collection $rows)
     {
@@ -37,10 +41,20 @@ class StudentsImport implements ToCollection, WithStartRow
                 }
 
                 $user->save();
+                $this->updated++;
             } else {
                 array_push($this->failed_updates, $row[7] . ' - ' . $row[15]);
             }
         }
+
+        app(AuditLogService::class)->log('student.import.batch', $this->actor, [
+            'created' => 0,
+            'updated' => $this->updated,
+            'deleted' => 0,
+            'failed_emails' => count($this->failed_updates),
+            'delete_missing' => false,
+            'mode' => 'update_existing',
+        ]);
     }
 
     public function startRow(): int

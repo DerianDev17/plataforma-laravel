@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\StudentGroup;
+use App\Models\Subject;
 use App\Http\Livewire\Sesiones\Show as SessionsShow;
 use App\Http\Livewire\Students\Show as StudentsShow;
 use App\Http\Livewire\UsersCrud\Show as UsersCrudShow;
@@ -183,6 +184,96 @@ class UserCrudTest extends TestCase
     }
 
     /** @test */
+    public function admin_can_create_manual_student_from_students_panel()
+    {
+        Livewire::actingAs($this->admin)
+            ->test(StudentsShow::class)
+            ->call('create')
+            ->assertSet('isOpen', true)
+            ->set('name', 'Camila')
+            ->set('last_name', 'Vera')
+            ->set('username', 'cvera')
+            ->set('password', 'secret123')
+            ->set('cedula', '1717171717')
+            ->set('cellphone', '0991112222')
+            ->set('email', 'camila.vera@example.com')
+            ->set('highschool', 'Colegio Nacional')
+            ->set('city', 'Quito')
+            ->set('payment_status', 'overdue')
+            ->set('name_representante', 'Andrea')
+            ->set('last_name_representante', 'Vera')
+            ->set('cellphone_representante', '0981112222')
+            ->set('regimen', 'Sierra')
+            ->set('exam_month', 'Junio')
+            ->set('role', 'superadmin')
+            ->call('store')
+            ->assertHasNoErrors();
+
+        $student = User::where('username', 'cvera')->firstOrFail();
+
+        $this->assertSame('Camila', $student->name);
+        $this->assertSame('Vera', $student->last_name);
+        $this->assertSame('camila.vera@example.com', $student->email);
+        $this->assertSame('1717171717', $student->cedula);
+        $this->assertSame('0991112222', $student->cellphone);
+        $this->assertSame('overdue', $student->payment_status);
+        $this->assertEquals(0, $student->status);
+        $this->assertTrue(Hash::check('secret123', $student->password));
+        $this->assertTrue($student->hasRole('student'));
+        $this->assertFalse($student->hasRole('superadmin'));
+    }
+
+    /** @test */
+    public function manual_student_form_requires_core_fields()
+    {
+        Livewire::actingAs($this->admin)
+            ->test(StudentsShow::class)
+            ->call('create')
+            ->call('store')
+            ->assertHasErrors([
+                'name' => 'required',
+                'last_name' => 'required',
+                'username' => 'required',
+                'email' => 'required',
+                'cedula' => 'required',
+                'cellphone' => 'required',
+            ]);
+    }
+
+    /** @test */
+    public function manual_student_form_rejects_duplicate_username_and_email()
+    {
+        User::factory()->create([
+            'username' => 'duplicado',
+            'email' => 'duplicado@example.com',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test(StudentsShow::class)
+            ->call('create')
+            ->set('name', 'Luis')
+            ->set('last_name', 'Mora')
+            ->set('username', 'duplicado')
+            ->set('password', 'secret123')
+            ->set('cedula', '1818181818')
+            ->set('cellphone', '0993334444')
+            ->set('email', 'duplicado@example.com')
+            ->set('highschool', 'Colegio Nacional')
+            ->set('city', 'Ambato')
+            ->set('payment_status', 'paid')
+            ->set('name_representante', 'Patricia')
+            ->set('last_name_representante', 'Mora')
+            ->set('cellphone_representante', '0983334444')
+            ->set('regimen', 'Sierra')
+            ->set('exam_month', 'Febrero')
+            ->call('store')
+            ->assertHasErrors([
+                'username' => 'unique',
+                'email' => 'unique',
+            ]);
+    }
+
+    /** @test */
     public function admin_can_create_student_user_with_username_from_user_admin()
     {
         Livewire::actingAs($this->admin)
@@ -312,6 +403,39 @@ class UserCrudTest extends TestCase
             ->set('searchTerm', now()->toDateString());
 
         $this->assertTrue($this->queryLogContainsLike(DB::getQueryLog()));
+    }
+
+    /** @test */
+    public function admin_can_create_course_session_with_selected_group()
+    {
+        $group = StudentGroup::create([
+            'name' => 'Grupo A',
+            'code' => 'A',
+            'webinar_id' => '123',
+        ]);
+        $subject = Subject::forceCreate([
+            'name' => 'Matematica',
+            'code' => 'MAT',
+            'description' => 'Materia de prueba',
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test(SessionsShow::class)
+            ->set('subject', (string) $subject->id)
+            ->set('student_groups_id', (string) $group->id)
+            ->set('datetime', '2026-07-01 09:30')
+            ->set('module_number', '2')
+            ->call('store')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('course_sessions', [
+            'course_id' => $group->id,
+            'subject' => (string) $subject->id,
+            'student_groups_id' => $group->id,
+            'date' => '2026-07-01',
+            'time' => '09:30',
+            'module_number' => '2',
+        ]);
     }
 
     /** @test */

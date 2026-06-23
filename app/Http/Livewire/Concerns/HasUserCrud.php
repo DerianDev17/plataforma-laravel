@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Concerns;
 
 use App\Exports\StudentsExport;
 use App\Models\User;
+use App\Services\Audit\AuditLogService;
 use App\Services\LiveClass\StudentLiveClassAccessService;
 use App\Services\NotificationService;
 use App\Services\Students\StudentDashboardCounterService;
@@ -66,7 +67,7 @@ trait HasUserCrud
         return view($view, [
             'studentsForTable' => User::students()
                 ->orderBy('id', 'desc')
-                ->with(['roles', 'student_group'])
+                ->with('student_group')
                 ->when($searchTerm !== '', function ($query) use ($searchTerm): void {
                     $likeSearch = '%' . $searchTerm . '%';
 
@@ -142,7 +143,7 @@ trait HasUserCrud
     {
         $this->authorizeAbility('edit_users');
 
-        $email_validation = 'required|email:rfc|not_regex:/[\r\n]/';
+        $email_validation = 'required|string|email:rfc|max:255|not_regex:/[\r\n]/';
         if ($this->from_create === true) {
             $email_validation .= '|unique:users,email';
         } elseif ($this->student_id) {
@@ -157,12 +158,12 @@ trait HasUserCrud
         }
 
         $this->validate([
-            'name' => 'required',
-            'last_name' => 'required',
+            'name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'username' => $username_validation,
             'password' => $this->from_create === true ? 'required|string|min:8' : 'nullable|string|min:8',
-            'cedula' => 'required',
-            'cellphone' => 'required',
+            'cedula' => 'required|string|max:20',
+            'cellphone' => 'required|string|max:30',
             'email' => $email_validation,
             'highschool' => 'required',
             'city' => 'required',
@@ -175,6 +176,7 @@ trait HasUserCrud
         ]);
 
         $paymentStatus = User::normalizePaymentStatus($this->payment_status);
+        $roleName = 'student';
 
         $user = User::updateOrCreate(['id' => $this->student_id], [
             'name' => $this->name,
@@ -199,7 +201,14 @@ trait HasUserCrud
             'exam_month' => $this->exam_month,
         ]);
 
-        $user->assignRole($this->role ?: 'student');
+        $user->assignRole($roleName);
+        $this->audit()->log($user->wasRecentlyCreated ? 'user.admin.created' : 'user.admin.updated', auth()->user(), [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'username' => $user->username,
+            'role' => $roleName,
+            'payment_status' => $user->payment_status,
+        ]);
         $this->clearLiveClassCounters();
         $this->refreshStudentDashboardCounters();
 
@@ -257,7 +266,15 @@ trait HasUserCrud
     public function delete($id)
     {
         $this->authorizeAbility('edit_users');
-        User::findOrFail($id)->forceDelete();
+
+        $student = User::findOrFail($id);
+        $this->audit()->log('user.admin.deleted', auth()->user(), [
+            'user_id' => $student->id,
+            'email' => $student->email,
+            'username' => $student->username,
+        ]);
+
+        $student->forceDelete();
         $this->clearLiveClassCounters();
         $this->refreshStudentDashboardCounters();
         session()->flash('message', 'Estudiante elminado.');
@@ -282,6 +299,7 @@ trait HasUserCrud
         }
 
         $student = User::students()->findOrFail($id);
+        $previousPaymentStatus = $student->effective_payment_status;
 
         $student->payment_status = $paymentStatus;
         $student->status = User::paymentStatusAllowsAccess($paymentStatus);
@@ -292,6 +310,14 @@ trait HasUserCrud
         }
 
         $student->save();
+
+        $this->audit()->log('user.admin.payment_status_updated', auth()->user(), [
+            'user_id' => $student->id,
+            'email' => $student->email,
+            'from' => $previousPaymentStatus,
+            'to' => $paymentStatus,
+            'access' => (bool) $student->status,
+        ]);
 
         $this->clearLiveClassCounters();
         $this->refreshStudentDashboardCounters();
@@ -308,6 +334,12 @@ trait HasUserCrud
         $student->password = Hash::make($tempPassword);
         $student->must_change_password = true;
         $student->save();
+
+        $this->audit()->log('user.admin.password_reset', auth()->user(), [
+            'user_id' => $student->id,
+            'email' => $student->email,
+            'username' => $student->username,
+        ]);
 
         app(NotificationService::class)->sendRegistrationCredentials($student, $tempPassword);
         session()->flash('message', 'Contrasena temporal generada y enviada al estudiante.');
@@ -334,5 +366,10 @@ trait HasUserCrud
         if (method_exists($this, 'update_counters')) {
             $this->update_counters();
         }
+    }
+
+    private function audit(): AuditLogService
+    {
+        return app(AuditLogService::class);
     }
 }

@@ -4,19 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseSession;
 use App\Models\User;
+use App\Services\Audit\AuditLogService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user, AuditLogService $audit)
     {
+        $audit->log('user.admin.deleted', $request->user(), [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'username' => $user->username,
+        ]);
+
         $user->delete();
 
         return back()->with('message', 'Usuario eliminado.');
     }
 
-    public function enviarCorreoCuentas(NotificationService $notifications)
+    public function enviarCorreoCuentas(Request $request, NotificationService $notifications, AuditLogService $audit)
     {
         set_time_limit(0);
 
@@ -33,6 +40,12 @@ class UserController extends Controller
             }
             usleep(250000);
         }
+
+        $audit->log('user.registration_emails.sent', $request->user(), [
+            'sent' => $counter,
+            'selected' => $users->count(),
+            'email_filter' => 'gmail',
+        ]);
 
         return $counter . ' emails enviados';
     }

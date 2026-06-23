@@ -41,7 +41,7 @@ class UpdaterController extends Controller
         $archivo_excel = $request->file('file');
 
         //importar
-        $import = new StudentsImport;
+        $import = new StudentsImport($request->user());
         Excel::import($import, $archivo_excel);
         app(StudentLiveClassAccessService::class)->clearCountersCache();
 

@@ -45,7 +45,7 @@ class UpdaterController extends Controller
         $archivo_excel = $request->file('file');
 
         //importar
-        $import = new StudentsImportar($debe_borrar);
+        $import = new StudentsImportar($debe_borrar, null, $request->user());
         Excel::import($import, $archivo_excel);
         app(StudentLiveClassAccessService::class)->clearCountersCache();
         $message = 'Base de datos actualizada<br>';

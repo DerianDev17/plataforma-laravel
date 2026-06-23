@@ -22,6 +22,9 @@
     @case('calendar')
         <svg {{ $attributes->merge($common) }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         @break
+    @case('calendar-plus')
+        <svg {{ $attributes->merge($common) }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="20"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+        @break
     @case('bell')
         <svg {{ $attributes->merge($common) }}><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
         @break
@@ -33,6 +36,15 @@
         @break
     @case('book')
         <svg {{ $attributes->merge($common) }}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        @break
+    @case('upload')
+        <svg {{ $attributes->merge($common) }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        @break
+    @case('file-spreadsheet')
+        <svg {{ $attributes->merge($common) }}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8M8 17h8M10 9h1"/></svg>
+        @break
+    @case('alert-triangle')
+        <svg {{ $attributes->merge($common) }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         @break
     @case('sprout')
         <svg {{ $attributes->merge($common)->merge(['stroke-width' => '1.8']) }}><path d="M12 21c0-5.25 2.75-8 8-8 0 5.25-2.75 8-8 8Z"/><path d="M12 21c0-6.2-3.4-9.8-9-10 0 5.8 3.2 9.5 9 10Z"/><path d="M12 21V9"/><path d="M12 9c0-3 1.7-5 5-6 .2 3.4-1.5 5.4-5 6Z"/></svg>

@@ -56,10 +56,16 @@
                 <h3 class="eus-card-title">Directorio de estudiantes</h3>
                 <p class="muted-small">Filtra, exporta y gestiona datos individuales.</p>
             </div>
-            <button wire:click="downloadStudents" class="eus-btn eus-btn-secondary eus-btn-sm">
-                <x-ui.icon name="book" :size="16" />
-                Descargar
-            </button>
+            <div class="user-admin-header-actions">
+                <button type="button" wire:click="create" class="eus-btn eus-btn-primary eus-btn-sm">
+                    <x-ui.icon name="users" :size="16" />
+                    Nuevo estudiante
+                </button>
+                <button type="button" wire:click="downloadStudents" class="eus-btn eus-btn-secondary eus-btn-sm">
+                    <x-ui.icon name="book" :size="16" />
+                    Descargar
+                </button>
+            </div>
         </div>
 
         <div class="eus-card-body">

@@ -16,11 +16,13 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
     private array $failed_emails = [];
     private StudentImportService $service;
     private $delete;
+    private ?User $actor;
 
-    public function __construct($delete, ?StudentImportService $service = null)
+    public function __construct($delete, ?StudentImportService $service = null, ?User $actor = null)
     {
         $this->delete = $delete;
         $this->service = $service ?? app(StudentImportService::class);
+        $this->actor = $actor;
     }
 
     public function collection(Collection $estudiantes)
@@ -29,6 +31,7 @@ class StudentsImportar implements ToCollection, WithStartRow, WithChunkReading
 
         $this->lastResult = $this->service->import($estudiantes, [
             'delete_missing' => (bool) $this->delete,
+            'actor' => $this->actor,
         ]);
 
         $this->failed_emails = $this->lastResult->failedEmails();

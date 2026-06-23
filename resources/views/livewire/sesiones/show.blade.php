@@ -1,140 +1,259 @@
-<x-slot name="header">
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        Sesiones
-    </h2>
-</x-slot>
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+@php
+    use Carbon\Carbon;
 
+    $statCards = [
+        ['variant' => 'info', 'icon' => 'calendar', 'value' => number_format($stats['total']), 'label' => 'Sesiones creadas'],
+        ['variant' => 'success', 'icon' => 'check', 'value' => number_format($stats['today']), 'label' => 'Programadas hoy'],
+        ['variant' => 'orange', 'icon' => 'monitor', 'value' => number_format($stats['upcoming']), 'label' => 'Proximas'],
+        ['variant' => 'purple', 'icon' => 'users', 'value' => number_format($stats['groups']), 'label' => 'Paralelos activos'],
+    ];
+@endphp
+
+<div class="dashboard-stack sessions-page">
     <x-ui.alert />
 
-    <button wire:click="create()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10">Crear nueva sesión</button>
-    <x-input type="text" placeholder="Buscar" wire:model="searchTerm" />
+    <section class="dashboard-hero sessions-hero" aria-label="Resumen de sesiones">
+        <div class="dashboard-hero-body">
+            <div>
+                <p class="dashboard-eyebrow">Calendario academico</p>
+                <h2 class="dashboard-title">Sesiones de clase</h2>
+                <p class="dashboard-copy">
+                    Programa, filtra y edita las clases que alimentan asistencias, reuniones y accesos de estudiantes.
+                </p>
+                <span class="eus-badge badge-on-dark">{{ $sesiones->total() }} resultados</span>
+            </div>
 
-    @if (count($sesiones) > 0)
-    <div class="py-10">
-        <div class="inline-block min-w-full shadow rounded-lg overflow-hidden">
-            <table class="min-w-full leading-normal">
-                <thead>
-                    <tr>
-                        <th class="px-5 py-3 border-b-2 border-black bg-black text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Materia
-                        </th>
-                        <th class="px-5 py-3 border-b-2 border-black bg-black text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Fecha y Hora
-                        </th>
-                        <th class="px-5 py-3 border-b-2 border-black bg-black text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Grupo
-                        </th>
-                        <th class="px-5 py-3 border-b-2 border-black bg-black text-left text-xs font-semibold text-white uppercase tracking-wider">
-                            Módulo
-                        </th>
-                        <th class="px-5 py-3 border-b-2 border-black bg-black text-left text-xs font-semibold text-white uppercase tracking-wider">
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($sesiones as $sesion)
-                    <tr>
-                        <td class="px-5 py-5 bg-white text-sm @if (!$loop->last) border-gray-200 border-b @endif">
-                            {{ Str::limit($sesion->subject, 25) }}
-                        </td>
-                        <td class="px-5 py-5 bg-white text-sm @if (!$loop->last) border-gray-200 border-b @endif">
-                            {{ Str::limit($sesion->date, 25) }} {{ Str::limit($sesion->time, 25) }}
-                        </td>
-                        <td class="px-5 py-5 bg-white text-sm @if (!$loop->last) border-gray-200 border-b @endif">
-                            {{ optional($sesion->student_group)->code ?? '-' }}
-                        </td>
-                        <td class="px-5 py-5 bg-white text-sm @if (!$loop->last) border-gray-200 border-b @endif">
-                            {{ Str::limit($sesion->module_number, 25) }}
-                        </td>
-                        <td class="px-5 py-5 bg-white text-sm @if (!$loop->last) border-gray-200 border-b @endif text-right">
-                            <div class="inline-block whitespace-no-wrap">
-                                <button wire:click="edit({{ $sesion->id }})" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Editar</button>
-                                <button wire:click="$emit('triggerDelete',{{ $sesion->id }})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Borrar</button>
-                            </div>
-                        </td>
-
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            {{ $sesiones->links('components.ui.pagination',['is_livewire' => true]) }}
+            <div class="dashboard-mark" aria-hidden="true">
+                <x-ui.icon name="calendar" :size="38" />
+            </div>
         </div>
-    </div>
-    @else
-    <div class="py-10 text-center text-gray-500">
-        <p class="text-lg">No hay sesiones registradas.</p>
-    </div>
-    @endif
+    </section>
+
+    <section class="dashboard-grid" aria-label="Indicadores de sesiones">
+        @foreach($statCards as $stat)
+            <x-dashboard.stat-card
+                :variant="$stat['variant']"
+                :icon="$stat['icon']"
+                :value="$stat['value']"
+                :label="$stat['label']"
+            />
+        @endforeach
+    </section>
+
+    <section class="eus-card" aria-label="Gestion de sesiones">
+        <div class="eus-card-header sessions-card-header">
+            <div>
+                <h3 class="eus-card-title">Listado de sesiones</h3>
+                <p class="muted-small">Busca por fecha, hora, materia, modulo o paralelo.</p>
+            </div>
+
+            <div class="sessions-toolbar-actions">
+                <button type="button" wire:click="create" class="eus-btn eus-btn-primary">
+                    <x-ui.icon name="calendar-plus" :size="17" />
+                    Crear sesion
+                </button>
+            </div>
+        </div>
+
+        <div class="eus-card-body sessions-toolbar">
+            <div>
+                <label for="session-search" class="eus-label">Buscar</label>
+                <input
+                    id="session-search"
+                    type="search"
+                    class="eus-input"
+                    placeholder="Fecha, materia, modulo o paralelo"
+                    wire:model.live.debounce.350ms="searchTerm"
+                >
+            </div>
+        </div>
+
+        @if($sesiones->count())
+            <div class="eus-table-wrapper">
+                <table class="eus-table sessions-table">
+                    <thead>
+                        <tr>
+                            <th>Sesion</th>
+                            <th>Fecha y hora</th>
+                            <th>Paralelo</th>
+                            <th>Modulo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($sesiones as $sesion)
+                            @php
+                                $date = filled($sesion->date) ? Carbon::parse($sesion->date) : null;
+                                $time = filled($sesion->time) ? substr($sesion->time, 0, 5) : '--:--';
+                                $group = $sesion->student_group;
+                            @endphp
+                            <tr>
+                                <td>
+                                    <div class="session-subject-cell">
+                                        <div class="date-token session-date-token" aria-hidden="true">
+                                            {{ $date ? $date->format('d') : '--' }}
+                                            <span>{{ $date ? $date->isoFormat('MMM') : '---' }}</span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-strong text-truncate">{{ $sesion->subject ?: 'Sesion sin materia' }}</div>
+                                            <div class="muted-small text-truncate">ID {{ $sesion->id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="font-strong">{{ $date ? $date->format('d/m/Y') : 'Sin fecha' }}</div>
+                                    <div class="muted-small">{{ $time }}</div>
+                                </td>
+                                <td>
+                                    @if($group)
+                                        <span class="eus-badge eus-badge-blue">{{ $group->code ?? $group->name }}</span>
+                                        @if($group->name && $group->name !== $group->code)
+                                            <div class="muted-small">{{ $group->name }}</div>
+                                        @endif
+                                    @else
+                                        <span class="eus-badge eus-badge-red">Sin paralelo</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="eus-badge eus-badge-gray">Modulo {{ $sesion->module_number ?: '-' }}</span>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button type="button" wire:click="edit({{ $sesion->id }})" class="eus-btn eus-btn-secondary eus-btn-sm">
+                                            Editar
+                                        </button>
+                                        <button type="button" wire:click="$emit('triggerDelete', {{ $sesion->id }})" class="eus-btn eus-btn-danger eus-btn-sm">
+                                            Borrar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="eus-card-footer sessions-footer">
+                {{ $sesiones->links('components.ui.pagination', ['is_livewire' => true]) }}
+            </div>
+        @else
+            <div class="eus-empty sessions-empty">
+                <div class="eus-empty-icon">
+                    <x-ui.icon name="calendar" :size="28" />
+                </div>
+                <div class="eus-empty-title">Sin sesiones registradas</div>
+                <div class="eus-empty-text">
+                    Crea la primera sesion o ajusta la busqueda para revisar el calendario academico.
+                </div>
+                <button type="button" wire:click="create" class="eus-btn eus-btn-primary">
+                    <x-ui.icon name="calendar-plus" :size="17" />
+                    Crear sesion
+                </button>
+            </div>
+        @endif
+    </section>
 
     @if($isOpen)
-    <x-ui.customised-modal>
-        <x-slot name="content">
-            @error('session_id') <span class="text-red-500">{{ $message }}</span>@enderror
+        <x-ui.customised-modal>
+            <x-slot name="content">
+                <form class="sessions-form" wire:submit.prevent="store" novalidate>
+                    <div class="eus-modal-header">
+                        <div>
+                            <h3 class="eus-modal-title">{{ $session_id ? 'Editar sesion' : 'Crear nueva sesion' }}</h3>
+                            <p class="muted-small">Define materia, paralelo, fecha y modulo para la clase.</p>
+                        </div>
+                        <button type="button" wire:click="closeModal" class="eus-btn eus-btn-ghost eus-btn-icon" aria-label="Cerrar modal">
+                            &times;
+                        </button>
+                    </div>
 
-            <form>
-                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="flex flex-wrap -mx-3 mb-6">
-                        <div class="w-full md:w-2/2 px-3 mb-6 md:mb-0">
-                            <label for="titleInput" class="block text-gray-700 text-sm font-bold mb-2">Materia:</label>
-                            <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="subject" placeholder="Materia" wire:model="subject">
-                                <option value="" class="py-1" selected hidden>Seleccione una materia...</option>
-                                @foreach ($subjects as $subject)
-                                <option value="{{$subject->id}}" class="py-1">{{$subject->name}}</option>
+                    <div class="eus-modal-body sessions-form-grid">
+                        <div>
+                            <label for="session-subject" class="eus-label eus-label-required">Materia</label>
+                            <select
+                                id="session-subject"
+                                class="eus-select"
+                                wire:model.defer="subject"
+                                required
+                                @error('subject') aria-invalid="true" aria-describedby="session-subject-error" @enderror
+                            >
+                                <option value="">Seleccione una materia</option>
+                                @foreach ($subjects as $subjectOption)
+                                    <option value="{{ $subjectOption->id }}">{{ $subjectOption->name }}</option>
                                 @endforeach
                             </select>
-                            @error('subject') <span class="text-red-500">{{ $message }}</span>@enderror
+                            @error('subject')
+                                <p id="session-subject-error" class="eus-error" role="alert">{{ $message }}</p>
+                            @enderror
                         </div>
-                    </div>
 
-                    <div class="flex flex-wrap -mx-3 mb-6">
-                        <div class="w-full md:w-2/2 px-3 mb-6 md:mb-0">
-                            <label for="titleInput" class="block text-gray-700 text-sm font-bold mb-2">Fecha y hora de la sesión:</label>
-                            <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline datetime-session" id="datetime-session" placeholder="Fecha y hora" wire:model="datetime">
-                            @error('datetime') <span class="text-red-500">{{ $message }}</span>@enderror
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap -mx-3 mb-6">
-                        <div class="w-full md:w-2/2 px-3 mb-6 md:mb-0">
-                            <label for="titleInput" class="block text-gray-700 text-sm font-bold mb-2">Grupo (paralelo):</label>
-                            <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="titleInput" placeholder="Grupo" wire:model="course_id">
-                                <option value="" class="py-1" selected hidden>Seleccione un grupo...</option>
-                                @foreach ($student_groups as $grp)
-                                <option value="{{$grp->id}}" class="py-1">{{$grp->code}}</option>
+                        <div>
+                            <label for="session-group" class="eus-label eus-label-required">Grupo o paralelo</label>
+                            <select
+                                id="session-group"
+                                class="eus-select"
+                                wire:model.defer="student_groups_id"
+                                required
+                                @error('student_groups_id') aria-invalid="true" aria-describedby="session-group-error" @enderror
+                            >
+                                <option value="">Seleccione un grupo</option>
+                                @foreach ($student_groups as $groupOption)
+                                    <option value="{{ $groupOption->id }}">{{ $groupOption->code }} {{ $groupOption->name ? '- ' . $groupOption->name : '' }}</option>
                                 @endforeach
                             </select>
-                            @error('course_id') <span class="text-red-500">{{ $message }}</span>@enderror
+                            @error('student_groups_id')
+                                <p id="session-group-error" class="eus-error" role="alert">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="datetime-session" class="eus-label eus-label-required">Fecha y hora</label>
+                            <input
+                                type="text"
+                                class="eus-input datetime-session"
+                                id="datetime-session"
+                                placeholder="YYYY-MM-DD HH:mm"
+                                wire:model.defer="datetime"
+                                required
+                                @error('datetime') aria-invalid="true" aria-describedby="session-datetime-error" @enderror
+                            >
+                            @error('datetime')
+                                <p id="session-datetime-error" class="eus-error" role="alert">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="session-module" class="eus-label eus-label-required">Modulo</label>
+                            <select
+                                id="session-module"
+                                class="eus-select"
+                                wire:model.defer="module_number"
+                                required
+                                @error('module_number') aria-invalid="true" aria-describedby="session-module-error" @enderror
+                            >
+                                <option value="">Seleccione un modulo</option>
+                                @for($module = 1; $module <= 5; $module++)
+                                    <option value="{{ $module }}">Modulo {{ $module }}</option>
+                                @endfor
+                            </select>
+                            @error('module_number')
+                                <p id="session-module-error" class="eus-error" role="alert">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap -mx-3 mb-6">
-                        <div class="w-full md:w-2/2 px-3 mb-6 md:mb-0">
-                            <label for="titleInput" class="block text-gray-700 text-sm font-bold mb-2">Módulo:</label>
-                            <select class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" id="titleInput" placeholder="Grupo" wire:model="module_number">
-                                <option value="" class="py-1" selected hidden>Seleccione un módulo...</option>
-                                <option value="1" class="py-1">Módulo 1</option>
-                                <option value="2" class="py-1">Módulo 2</option>
-                                <option value="3" class="py-1">Módulo 3</option>
-                                <option value="4" class="py-1">Módulo 4</option>
-                                <option value="5" class="py-1">Módulo 5</option>
-                            </select>
-                            @error('module_number') <span class="text-red-500">{{ $message }}</span>@enderror
-                        </div>
+                    <div class="eus-modal-footer sessions-form-actions">
+                        <button type="button" wire:click="closeModal" class="eus-btn eus-btn-secondary">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="eus-btn eus-btn-primary">
+                            Guardar sesion
+                        </button>
                     </div>
-                </div>
-                <div class="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <span class="flex w-full sm:ml-3 sm:w-auto">
-                        <button wire:click.prevent="store()" type="button" class="inline-flex bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Guardar</button>
-                    </span>
-                    <span class="mt-3 flex w-full sm:mt-0 sm:w-auto">
-                        <button wire:click="closeModal()" type="button" class="inline-flex bg-white hover:bg-gray-200 border border-gray-300 text-gray-500 font-bold py-2 px-4 rounded">Cancelar</button>
-                    </span>
-                </div>
-            </form>
-        </x-slot>
-        </x-customised-modal>
-        @endif
+                </form>
+            </x-slot>
+        </x-ui.customised-modal>
+    @endif
 </div>
 
 @push('estilos')
@@ -150,30 +269,33 @@
     document.addEventListener('DOMContentLoaded', function() {
         Livewire.on('triggerDelete', sessionId => {
             Swal.fire({
-                title: 'Confirmar acción',
-                text: '¡Se eliminará la sesión!',
+                title: 'Confirmar accion',
+                text: 'Se eliminara la sesion.',
                 type: "warning",
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Eliminar'
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.value) {
                     @this.call('delete', sessionId)
-                } else {
-                    console.log("Canceled");
                 }
             });
         });
     });
 
     Livewire.on('modalOpened', () => {
-        // date picker
-        $(".datetime-session").flatpickr({
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
+        document.querySelectorAll('.datetime-session').forEach((input) => {
+            if (input._flatpickr) {
+                input._flatpickr.destroy();
+            }
+
+            flatpickr(input, {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+            });
         });
     });
 </script>
 @endpush
-

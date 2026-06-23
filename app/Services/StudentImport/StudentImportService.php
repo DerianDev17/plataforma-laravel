@@ -42,7 +42,11 @@ class StudentImportService
         $failedEmails = $this->collectInvalidEmails($rows);
         $errors = [];
 
-        $existingStudents = User::students()->get()->keyBy(fn ($u) => trim($u->email))->all();
+        $existingStudents = User::students()
+            ->select(['id', 'email', 'status', 'payment_status', 'exam_month', 'diapago', 'enviarCorreo', 'student_group_id', 'id_zoom', 'join_url'])
+            ->get()
+            ->keyBy(fn ($u) => trim($u->email))
+            ->all();
 
         if ($deleteMissing) {
             $deleted = $this->deleteStudentsNotIn($rows);
@@ -90,7 +94,10 @@ class StudentImportService
 
     public function deleteStudentsNotIn(iterable $importRows): int
     {
-        $toDelete = User::students()->get();
+        $toDelete = User::students()
+            ->select(['id', 'email'])
+            ->with('roles:id,name')
+            ->get();
         $importEmails = collect($importRows)
             ->map(fn ($row) => trim($row[7] ?? ''))
             ->filter()

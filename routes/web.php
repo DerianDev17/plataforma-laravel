@@ -58,6 +58,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::view('/companies', 'pages.companies')->name('companies');
         Route::view('/admin/asistencias', 'pages.asistencias')->name('asistencias-crud');
         Route::view('/admin/sesiones', 'pages.sesiones')->name('sesiones-crud');
+        Route::view('/admin/activity', 'pages.activity')->name('admin.activity');
         Route::view('/admin/live-class-provider', 'pages.live-class-provider')->name('live-class-provider');
         Route::redirect('/admin/zoom-configuration', '/admin/live-class-provider')->name('zoom-configuration');
 
